@@ -26,8 +26,9 @@ export type PostSummaryDTO = {
   id: string;
   slug: string;
   title: string;
-  description: string;
-  media: { url: string; type: "IMAGE" | "VIDEO" | "EMBED" | "CANVAS" };
+  description: string | null;
+  /** Absolute URL, or null when the post has no stored media. */
+  media: { url: string | null; type: "IMAGE" | "VIDEO" | "EMBED" | "CANVAS" };
   tags: TagDTO[];
   artist: { handle: string; name: string; avatarUrl: string | null };
   likeCount: number;
