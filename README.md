@@ -1,56 +1,37 @@
-# Welcome to your Expo app 👋
+# The Artist Post — native app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Native Expo (iOS + Android) app for **The Artist Post**, a West Palm Beach nonprofit arts hub. Mirrors the structure and brand of the web app at [theartistpost.fluxlab.agency](https://theartistpost.fluxlab.agency), on a proper design system (`/expo-design-system`), following native platform conventions rather than reskinning the web layout.
 
-## Get started
+Sibling repo: [`theartistpost`](https://github.com/fluxopss/theartistpost) (Next.js web app) — the backend/API for this app, and **production**: a push to its `main` deploys live within ~3 minutes via a VPS cron. See `AGENTS.md` for the full rule.
 
-1. Install dependencies
+## Stack
 
-   ```bash
-   npm install
-   ```
+- **Expo SDK 57** · React Native 0.86 · React 19 · Expo Router (native tabs + stacks, array-group shared stacks)
+- **TypeScript**, strict
+- **Design system** — `src/theme/` (brand palette, type ramp, spacing/radius/shadow/motion tokens) + `src/components/` primitives
+- **Domain logic** — `src/domain/` — pure TS ported from the web app (night/schedule/wall/kindness), with fixes (Eastern-time month grid, ICS escaping)
+- **Content** — `src/content/` — bundled copy ported from the web app, real facts only
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Quick start
 
 ```bash
-npm run reset-project
+npm install
+npx expo run:android   # first run: builds a dev client (Android SDK required)
+npx expo start         # subsequent runs / iOS via Expo Go or a dev client
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+iOS dev/simulator builds run on EAS cloud (`eas build --profile development-simulator`) — this is developed on Windows, no local Xcode.
 
-### Other setup steps
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # expo lint
+npm test            # jest (jest-expo), domain logic
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Status
 
-## Learn more
+Early scaffold (design system + navigation shell). See the build plan for phases, the backend `/api/v1` contract, and store-readiness checklist — ask Jonathan for the current copy, or check `.claude/plans/` on his machine.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Design honesty
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Per the web app's own rule: this app never invents artists, events, or kindness notes to fill a screen. Empty states are honest until real content exists.

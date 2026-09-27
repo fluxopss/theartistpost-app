@@ -17,7 +17,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.fluxlabsflorida.theartistpostapp"
     },
     "web": {
       "output": "static",
@@ -28,11 +29,27 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#071A2E",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/ClashDisplay-Semibold.ttf",
+            "./assets/fonts/ClashDisplay-Bold.ttf",
+            "./assets/fonts/Jost-Regular.ttf",
+            "./assets/fonts/Jost-Medium.ttf",
+            "./assets/fonts/Jost-SemiBold.ttf"
+          ]
+        }
+      ],
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-sharing",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

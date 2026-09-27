@@ -1,73 +1,77 @@
-import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
+import { Text, type TextProps } from "react-native";
 
-import { Fonts, ThemeColor } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import {
+  maxFontScale,
+  paper,
+  type SparkTone,
+  type,
+  type TypeVariant,
+  useBrandColors,
+} from "@/theme";
+
+export type TextTone =
+  | "default"
+  | "muted"
+  | "accent"
+  | "danger"
+  | "success"
+  | "onAccent"
+  | "onStage"
+  | "paperInk"
+  | `spark-${SparkTone}`;
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
-  themeColor?: ThemeColor;
+  variant?: TypeVariant;
+  tone?: TextTone;
 };
 
-export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
-  const theme = useTheme();
+/**
+ * The only way screens render text. Size, family and tracking come from the
+ * type ramp; color comes from the brand palette so light/dark stay in sync.
+ */
+export function ThemedText({
+  variant = "body",
+  tone = "default",
+  style,
+  maxFontSizeMultiplier,
+  ...props
+}: ThemedTextProps) {
+  const palette = useBrandColors();
+
+  const color = (() => {
+    switch (tone) {
+      case "muted":
+        return palette.textMuted;
+      case "accent":
+        return palette.accentText;
+      case "danger":
+        return palette.danger;
+      case "success":
+        return palette.success;
+      case "onAccent":
+        return palette.onAccent;
+      case "onStage":
+        return "#FFFAF3";
+      case "paperInk":
+        return paper.kindness.ink;
+      case "spark-coral":
+        return palette.sparkInk.coral;
+      case "spark-gold":
+        return palette.sparkInk.gold;
+      case "spark-teal":
+        return palette.sparkInk.teal;
+      case "spark-violet":
+        return palette.sparkInk.violet;
+      default:
+        return palette.text;
+    }
+  })();
 
   return (
     <Text
-      style={[
-        { color: theme[themeColor ?? 'text'] },
-        type === 'default' && styles.default,
-        type === 'title' && styles.title,
-        type === 'small' && styles.small,
-        type === 'smallBold' && styles.smallBold,
-        type === 'subtitle' && styles.subtitle,
-        type === 'link' && styles.link,
-        type === 'linkPrimary' && styles.linkPrimary,
-        type === 'code' && styles.code,
-        style,
-      ]}
-      {...rest}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? maxFontScale[variant]}
+      style={[type[variant], { color }, style]}
+      {...props}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  small: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 500,
-  },
-  smallBold: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 700,
-  },
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: 500,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 600,
-    lineHeight: 52,
-  },
-  subtitle: {
-    fontSize: 32,
-    lineHeight: 44,
-    fontWeight: 600,
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 14,
-  },
-  linkPrimary: {
-    lineHeight: 30,
-    fontSize: 14,
-    color: '#3c87f7',
-  },
-  code: {
-    fontFamily: Fonts.mono,
-    fontWeight: Platform.select({ android: 700 }) ?? 500,
-    fontSize: 12,
-  },
-});

@@ -31,7 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# store credentials — never commit (see eas.json submit config)
+secrets/
 
 # typescript
 *.tsbuildinfo
