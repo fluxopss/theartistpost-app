@@ -52,6 +52,17 @@ export const stageNavy = "#071A2E";
 export const stageInk = "#061422";
 /** Cream text/border on the always-dark stage band — invariant across schemes. */
 export const stageText = "#FFFAF3";
+export const stageTextMuted = "rgba(255, 250, 243, 0.74)";
+export const stageLine = "rgba(255, 250, 243, 0.28)";
+export const stageSurface = "rgba(255, 250, 243, 0.08)";
+export const stagePressed = "rgba(255, 250, 243, 0.12)";
+
+/**
+ * The web's "gallery at night" light: soft teal and coral pools on navy.
+ * A lit room behind the content, not a decorative hero gradient.
+ */
+export const stageGlow =
+  "radial-gradient(ellipse at 50% 12%, rgba(46, 196, 182, 0.26) 0%, rgba(46, 196, 182, 0) 58%), radial-gradient(circle at 92% 78%, rgba(255, 107, 91, 0.16) 0%, rgba(255, 107, 91, 0) 42%), radial-gradient(circle at 6% 88%, rgba(240, 180, 41, 0.12) 0%, rgba(240, 180, 41, 0) 38%)";
 
 export const brandPalette: Record<BrandScheme, Palette> = {
   dark: {

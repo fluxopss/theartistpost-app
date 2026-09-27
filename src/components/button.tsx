@@ -9,9 +9,10 @@ import {
 
 import { Icon, type IconName } from "@/components/icon";
 import { ThemedText } from "@/components/themed-text";
-import { inkOnSpark, radius, spacing, spark, useBrandColors } from "@/theme";
+import { inkOnSpark, radius, spacing, spark, stageLine, stagePressed, stageText, useBrandColors } from "@/theme";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+/** `onStage` is the outline button for the always-navy stage band. */
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive" | "onStage";
 export type ButtonTone = "coral" | "teal" | "gold";
 export type ButtonSize = "md" | "lg";
 
@@ -54,6 +55,7 @@ export function Button({
     secondary: palette.bgElevated,
     ghost: "transparent",
     destructive: "transparent",
+    onStage: "transparent",
   }[variant];
 
   const ink = {
@@ -61,6 +63,7 @@ export function Button({
     secondary: palette.text,
     ghost: palette.accentText,
     destructive: palette.danger,
+    onStage: stageText,
   }[variant];
 
   const border =
@@ -68,7 +71,9 @@ export function Button({
       ? palette.separatorStrong
       : variant === "destructive"
         ? palette.danger
-        : "transparent";
+        : variant === "onStage"
+          ? stageLine
+          : "transparent";
 
   return (
     <Pressable
@@ -91,7 +96,11 @@ export function Button({
           justifyContent: "center",
           borderRadius: radius.pill,
           backgroundColor:
-            pressed && variant !== "primary" ? palette.bgPressed : fill,
+            pressed && variant === "onStage"
+              ? stagePressed
+              : pressed && variant !== "primary"
+                ? palette.bgPressed
+                : fill,
           borderWidth: border === "transparent" ? 0 : 1,
           borderColor: border,
           opacity: disabled ? 0.45 : pressed && variant === "primary" ? 0.82 : 1,

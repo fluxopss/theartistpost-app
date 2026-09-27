@@ -36,8 +36,9 @@ import {
 const sparkTones: SparkTone[] = ["coral", "gold", "teal", "violet"];
 
 function Swatch({ label, color }: { label: string; color: string }) {
+  const palette = useBrandColors();
   return (
-    <View style={{ alignItems: "center", gap: 4, width: 64 }}>
+    <View style={{ alignItems: "center", gap: spacing.xxs, width: 64 }}>
       <View
         style={{
           width: 40,
@@ -46,7 +47,7 @@ function Swatch({ label, color }: { label: string; color: string }) {
           borderCurve: "continuous",
           backgroundColor: color,
           borderWidth: 1,
-          borderColor: "rgba(128,128,128,0.3)",
+          borderColor: palette.separatorStrong,
         }}
       />
       <ThemedText variant="caption" tone="muted" numberOfLines={1}>

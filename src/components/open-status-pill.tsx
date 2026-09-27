@@ -2,10 +2,10 @@ import { View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { useOpenStatus } from "@/hooks/use-open-status";
-import { radius, spacing, useBrandColors } from "@/theme";
+import { radius, spacing, stageLine, stageSurface, useBrandColors } from "@/theme";
 
 /** "● Open now · 9:00 AM – 9:30 PM" for the live room on Clematis. */
-export function OpenStatusPill() {
+export function OpenStatusPill({ tone = "default" }: { tone?: "default" | "stage" }) {
   const palette = useBrandColors();
   const { open, label, hoursLabel } = useOpenStatus();
   return (
@@ -20,7 +20,9 @@ export function OpenStatusPill() {
         paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xxs,
         borderRadius: radius.pill,
-        backgroundColor: palette.accentSoft,
+        backgroundColor: tone === "stage" ? stageSurface : palette.accentSoft,
+        borderWidth: tone === "stage" ? 1 : 0,
+        borderColor: stageLine,
       }}
     >
       <View
@@ -31,8 +33,11 @@ export function OpenStatusPill() {
           backgroundColor: open ? palette.success : palette.textMuted,
         }}
       />
-      <ThemedText variant="footnote">
-        {label} · <ThemedText variant="footnote" tone="muted">{hoursLabel}</ThemedText>
+      <ThemedText variant="footnote" tone={tone === "stage" ? "onStage" : "default"}>
+        {label} ·{" "}
+        <ThemedText variant="footnote" tone={tone === "stage" ? "onStageMuted" : "muted"}>
+          {hoursLabel}
+        </ThemedText>
       </ThemedText>
     </View>
   );

@@ -5,6 +5,7 @@ import {
   paper,
   type SparkTone,
   stageText,
+  stageTextMuted,
   type,
   type TypeVariant,
   useBrandColors,
@@ -18,6 +19,7 @@ export type TextTone =
   | "success"
   | "onAccent"
   | "onStage"
+  | "onStageMuted"
   | "paperInk"
   | `spark-${SparkTone}`;
 
@@ -53,6 +55,8 @@ export function ThemedText({
         return palette.onAccent;
       case "onStage":
         return stageText;
+      case "onStageMuted":
+        return stageTextMuted;
       case "paperInk":
         return paper.kindness.ink;
       case "spark-coral":
