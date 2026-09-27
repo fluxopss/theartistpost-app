@@ -2,7 +2,7 @@ import { forwardRef, useState } from "react";
 import { TextInput, type TextInputProps, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { colors, fonts, radius, spacing, useBrandColors } from "@/theme";
+import { colors, fonts, radius, spacing, type, useBrandColors } from "@/theme";
 
 /**
  * Labeled text input. Pass `textContentType` / `autoComplete` through so the
@@ -55,7 +55,7 @@ export const TextField = forwardRef<
             backgroundColor: palette.bgElevated,
             color: palette.text,
             fontFamily: fonts.body,
-            fontSize: 17,
+            fontSize: type.body.fontSize,
           },
           style,
         ]}

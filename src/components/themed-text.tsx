@@ -4,6 +4,7 @@ import {
   maxFontScale,
   paper,
   type SparkTone,
+  stageText,
   type,
   type TypeVariant,
   useBrandColors,
@@ -51,7 +52,7 @@ export function ThemedText({
       case "onAccent":
         return palette.onAccent;
       case "onStage":
-        return "#FFFAF3";
+        return stageText;
       case "paperInk":
         return paper.kindness.ink;
       case "spark-coral":

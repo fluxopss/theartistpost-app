@@ -1,24 +1,45 @@
 {
   "expo": {
-    "name": "theartistpost-app",
+    "name": "The Artist Post",
     "slug": "theartistpost-app",
+    "owner": "fluxlabsfloridas-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "theartistpostapp",
+    "scheme": "theartistpost",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#071A2E",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/874b50c8-20fc-4610-8c1f-f9c1c0aba065"
+    },
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "agency.fluxlab.theartistpost.dev",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "agency.fluxlab.theartistpost.dev",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#071A2E",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundImage": "./assets/images/android-icon-background.png"
       },
+      "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
-      "package": "com.fluxlabsflorida.theartistpostapp"
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -31,7 +52,7 @@
         {
           "backgroundColor": "#071A2E",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 200
         }
       ],
       [
@@ -49,11 +70,18 @@
       "expo-secure-store",
       "expo-sqlite",
       "expo-sharing",
-      "expo-video"
+      "expo-video",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "874b50c8-20fc-4610-8c1f-f9c1c0aba065"
+      }
     }
   }
 }

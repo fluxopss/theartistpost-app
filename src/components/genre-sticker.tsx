@@ -1,7 +1,7 @@
 import { Pressable, type StyleProp, type ViewStyle } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { radius, shadows, spacing, type SparkTone, sticker } from "@/theme";
+import { radius, shadows, spacing, type SparkTone, stageText, sticker } from "@/theme";
 
 /**
  * A tilted TAP genre sticker — the one piece of "hand-hung" brand chrome.
@@ -44,7 +44,7 @@ export function GenreSticker({
           borderRadius: radius.pill,
           backgroundColor: fill.bg,
           borderWidth: selected ? 2 : 1,
-          borderColor: selected ? "#FFFAF3" : fill.edge,
+          borderColor: selected ? stageText : fill.edge,
           boxShadow: shadows.sticker,
           transform: [{ rotate: `${pressed ? 0 : tilt}deg` }],
         },

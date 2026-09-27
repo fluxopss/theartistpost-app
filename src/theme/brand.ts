@@ -50,6 +50,8 @@ export const inkOnSpark = "#020B1A";
 /** Navy used for splash, app background config, and the always-dark Home stage. */
 export const stageNavy = "#071A2E";
 export const stageInk = "#061422";
+/** Cream text/border on the always-dark stage band — invariant across schemes. */
+export const stageText = "#FFFAF3";
 
 export const brandPalette: Record<BrandScheme, Palette> = {
   dark: {

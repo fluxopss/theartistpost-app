@@ -5,6 +5,7 @@ export {
   spark,
   stageInk,
   stageNavy,
+  stageText,
   sticker,
   useBrandColors,
   useBrandScheme,
