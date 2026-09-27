@@ -19,6 +19,7 @@ export type { BrandScheme, SparkTone } from "./brand";
 export { colors } from "./colors";
 export { fonts } from "./fonts";
 export type { FontFamily } from "./fonts";
+export { useBrandFonts } from "./load-fonts";
 export { duration, easeOut, springs } from "./motion";
 export { useNavigationTheme } from "./navigation-theme";
 export { radius } from "./radius";

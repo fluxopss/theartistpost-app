@@ -8,22 +8,29 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { persistBuster, persister, queryClient } from "@/api/query-client";
 import { applyStoredAppearance } from "@/storage/appearance";
-import { useBrandColors, useNavigationTheme } from "@/theme";
+import { useBrandColors, useBrandFonts, useNavigationTheme } from "@/theme";
 
-// Fonts are linked natively via the expo-font config plugin, and device
-// storage is synchronous — nothing async gates the first frame.
+// Device storage is synchronous; the only thing gating the first frame is
+// fonts, which are instant in real builds and load at runtime in Expo Go.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 applyStoredAppearance();
 
 const WEEK = 7 * 24 * 60 * 60 * 1000;
 
+// iOS sheets get the native material (Liquid Glass on iOS 26) when the
+// content is transparent; Android sheets need a real surface.
+const ios = process.env.EXPO_OS === "ios";
+
 export default function RootLayout() {
   const navigationTheme = useNavigationTheme();
   const palette = useBrandColors();
+  const fontsReady = useBrandFonts();
 
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
-  }, []);
+    if (fontsReady) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsReady]);
+
+  if (!fontsReady) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
@@ -41,7 +48,7 @@ export default function RootLayout() {
                   presentation: "formSheet",
                   sheetGrabberVisible: true,
                   sheetAllowedDetents: [0.75, 1],
-                  contentStyle: { backgroundColor: "transparent" },
+                  contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
                   headerShown: false,
                 }}
               />
@@ -56,7 +63,7 @@ export default function RootLayout() {
                   presentation: "formSheet",
                   sheetGrabberVisible: true,
                   sheetAllowedDetents: "fitToContents",
-                  contentStyle: { backgroundColor: "transparent" },
+                  contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
                   headerShown: false,
                 }}
               />

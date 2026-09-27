@@ -127,6 +127,20 @@ export const appCopy = {
   guestLine: "Browse as a guest — join to respond on the Wall.",
   sessionMemberLine: "Member pass active on this device.",
   sessionArtistLine: "Studio session open — publish waits on approval.",
+  scheduleEmptyTitle: "No nights on the board yet",
+  scheduleEmptyBody:
+    "The Artist Schedule is coming soon. When Robbie posts a night at Hacienda, it lands here first.",
+  scheduleDayEmpty: "No nights on this day.",
+  onboardingTitle: "Ready to take the first step?",
+  onboardingLead: "Artists join the schedule in two steps.",
+  onboardingSteps: [
+    { id: "agreement", title: "Review & sign the agreement", body: "The agreement opens in your browser." },
+    {
+      id: "link",
+      title: "Get your scheduling link",
+      body: "After your signed agreement is approved, Robbie sends a link to pick your night.",
+    },
+  ],
   comingNextTitle: "Designed next",
   comingNext: [
     {
