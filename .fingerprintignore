@@ -1,0 +1,4 @@
+# Hashes differ between Windows (local) and Linux (EAS) installs of this
+# transitive expo-router dependency, which fails the runtime-version check on
+# every cloud build. It is pinned by package-lock and never edited here.
+node_modules/@react-native-masked-view/masked-view/**/*
