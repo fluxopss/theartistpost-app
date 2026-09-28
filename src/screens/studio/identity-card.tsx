@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { View } from "react-native";
 
+import { useAuth } from "@/auth";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { ThemedText } from "@/components/themed-text";
@@ -20,15 +21,42 @@ import {
 /** Diameter of the studio monogram. */
 const MONOGRAM = 56;
 
+function gateCopy(kind: ReturnType<typeof useAuth>["gate"]["kind"]): { kicker: string; body: string } {
+  switch (kind) {
+    case "guest":
+      return { kicker: appCopy.studioKicker, body: appCopy.guestLine };
+    case "member":
+      return { kicker: "Member pass", body: appCopy.sessionMemberLine };
+    case "artist_pending":
+      return { kicker: "Studio pending", body: appCopy.sessionArtistLine };
+    case "artist":
+      return { kicker: "Approved studio", body: "You can put work on The Wall from this phone." };
+    case "admin":
+      return { kicker: "House admin", body: "Full studio access on this device." };
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
+  }
+}
+
 /**
- * The studio nameplate — a small placard lit in the house's always-night
- * palette, so it reads the same in light and dark mode. Name and city live
- * only on this phone; Edit opens Settings.
+ * The studio nameplate — lit in the house's always-night palette.
+ * Prefer the signed-in session when present; otherwise the on-device guest card.
  */
 export function IdentityCard() {
   const { studio, isGuest } = useStudio();
-  const initial = studio.displayName.trim().charAt(0).toUpperCase();
-  const summary = [appCopy.studioKicker, studio.displayName, studio.city].filter(Boolean).join(". ");
+  const { user, gate, canCompose, status } = useAuth();
+  const copy = gateCopy(gate.kind);
+
+  const displayName = user?.name ?? studio.displayName;
+  const subtitle = user?.handle
+    ? `@${user.handle}`
+    : user?.email
+      ? user.email
+      : studio.city;
+  const initial = displayName.trim().charAt(0).toUpperCase();
+  const summary = [copy.kicker, displayName, subtitle].filter(Boolean).join(". ");
 
   return (
     <View
@@ -59,44 +87,66 @@ export function IdentityCard() {
             backgroundColor: stageSurface,
           }}
         >
-          {isGuest || !initial ? (
+          {!user && (isGuest || !initial) ? (
             <Icon name="studio" size={28} color={stageText} />
           ) : (
-            // Decorative glyph in a fixed circle — it does not grow with Dynamic Type.
             <ThemedText variant="title1" maxFontSizeMultiplier={1} style={{ color: spark.teal }}>
-              {initial}
+              {initial || "·"}
             </ThemedText>
           )}
         </View>
-        <Button
-          title="Edit"
-          variant="onStage"
-          icon="pencil"
-          accessibilityLabel="Edit studio"
-          accessibilityHint="Opens Settings"
-          onPress={() => router.push("/settings")}
-        />
+        {user ? (
+          <Button
+            title="Settings"
+            variant="onStage"
+            icon="settings"
+            accessibilityLabel="Open settings"
+            onPress={() => router.push("/settings")}
+          />
+        ) : (
+          <Button
+            title="Edit"
+            variant="onStage"
+            icon="pencil"
+            accessibilityLabel="Edit studio"
+            accessibilityHint="Opens Settings"
+            onPress={() => router.push("/settings")}
+          />
+        )}
       </View>
 
       <View accessible accessibilityLabel={summary} style={{ gap: spacing.xxs }}>
         <ThemedText variant="eyebrow" style={{ color: spark.coral }}>
-          {appCopy.studioKicker}
+          {status === "loading" ? "Restoring pass…" : copy.kicker}
         </ThemedText>
         <ThemedText variant="title1" tone="onStage" selectable>
-          {studio.displayName}
+          {displayName}
         </ThemedText>
-        {studio.city ? (
+        {subtitle ? (
           <ThemedText variant="subheadline" tone="onStageMuted" selectable>
-            {studio.city}
+            {subtitle}
           </ThemedText>
         ) : null}
       </View>
 
-      {isGuest ? (
-        <ThemedText variant="footnote" tone="onStageMuted">
-          {appCopy.guestLine}
-        </ThemedText>
-      ) : null}
+      <ThemedText variant="footnote" tone="onStageMuted">
+        {copy.body}
+      </ThemedText>
+
+      <View style={{ gap: spacing.sm }}>
+        {!user ? (
+          <Button title="Join the house" tone="coral" onPress={() => router.push("/join")} />
+        ) : null}
+        {canCompose ? (
+          <Button title="New piece" tone="teal" icon="plus" onPress={() => router.push("/compose-studio")} />
+        ) : null}
+        {gate.kind === "artist_pending" ? (
+          <Button title="View join status" variant="onStage" onPress={() => router.push("/join")} />
+        ) : null}
+        {user && !canCompose && gate.kind === "member" ? (
+          <Button title="Request artist studio" variant="onStage" onPress={() => router.push("/join")} />
+        ) : null}
+      </View>
     </View>
   );
 }

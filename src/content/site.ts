@@ -144,8 +144,8 @@ export const appCopy = {
   comingNextTitle: "Designed next",
   comingNext: [
     {
-      title: "Email-code sign-in",
-      body: "Email-code sign-in so your studio follows you across devices.",
+      title: "Email-code return",
+      body: "Request a code when you already joined — the door is wired; the house API is catching up.",
     },
     {
       title: "Live Hacienda lineup",

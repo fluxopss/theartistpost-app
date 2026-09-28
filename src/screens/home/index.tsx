@@ -2,6 +2,7 @@ import { router, useFocusEffect } from "expo-router";
 import { setStatusBarStyle } from "expo-status-bar";
 import { useCallback } from "react";
 import { Pressable, View } from "react-native";
+import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
 
 import { useFeaturedNight } from "@/api/hooks";
 import { Button } from "@/components/button";
@@ -16,7 +17,7 @@ import { involveDoors } from "@/content/involve";
 import { history } from "@/content/history";
 import { copy, site } from "@/content/site";
 import { tapOrigin } from "@/content/stage";
-import { radius, screenMargin, spacing, useBrandColors } from "@/theme";
+import { duration, radius, screenMargin, spacing, useBrandColors } from "@/theme";
 import { contact } from "@/utils/links";
 
 import { KindnessTeaser } from "./kindness-teaser";
@@ -28,6 +29,7 @@ import { VisitSection } from "./visit-section";
 export function HomeScreen() {
   const palette = useBrandColors();
   const night = useFeaturedNight();
+  const reduceMotion = useReducedMotion();
 
   // The stage band is always navy, so the status bar is light while Home is up.
   useFocusEffect(
@@ -47,7 +49,10 @@ export function HomeScreen() {
     >
       <StageBand />
 
-      <View style={{ paddingTop: spacing.xxl, gap: spacing.xxxl }}>
+      <Animated.View
+        entering={reduceMotion ? undefined : FadeInUp.delay(180).duration(duration.slow).springify()}
+        style={{ paddingTop: spacing.xxl, gap: spacing.xxxl }}
+      >
         <View style={{ gap: spacing.xs }}>
           <View style={{ paddingHorizontal: screenMargin }}>
             <SectionHeader
@@ -132,7 +137,7 @@ export function HomeScreen() {
             </ThemedText>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </ScreenScroll>
   );
 }

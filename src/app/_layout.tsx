@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { persistBuster, persister, queryClient } from "@/api/query-client";
+import { AuthProvider } from "@/auth";
 import { applyStoredAppearance } from "@/storage/appearance";
 import { useBrandColors, useBrandFonts, useNavigationTheme } from "@/theme";
 
@@ -39,36 +40,52 @@ export default function RootLayout() {
           client={queryClient}
           persistOptions={{ persister, maxAge: WEEK, buster: persistBuster }}
         >
-          <ThemeProvider value={navigationTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="rsvp"
-                options={{
-                  presentation: "formSheet",
-                  sheetGrabberVisible: true,
-                  sheetAllowedDetents: [0.75, 1],
-                  contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="compose-kindness"
-                options={{ presentation: "modal", headerShown: false }}
-              />
-              <Stack.Screen name="inquiry" options={{ presentation: "modal", headerShown: false }} />
-              <Stack.Screen
-                name="note/[id]"
-                options={{
-                  presentation: "formSheet",
-                  sheetGrabberVisible: true,
-                  sheetAllowedDetents: "fitToContents",
-                  contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                  headerShown: false,
-                }}
-              />
-            </Stack>
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider value={navigationTheme}>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen
+                  name="rsvp"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.75, 1],
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="compose-kindness"
+                  options={{ presentation: "modal", headerShown: false }}
+                />
+                <Stack.Screen
+                  name="compose-studio"
+                  options={{ presentation: "modal", headerShown: true }}
+                />
+                <Stack.Screen
+                  name="join"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.9, 1],
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen name="inquiry" options={{ presentation: "modal", headerShown: false }} />
+                <Stack.Screen
+                  name="note/[id]"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: "fitToContents",
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
+              </Stack>
+            </ThemeProvider>
+          </AuthProvider>
         </PersistQueryClientProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

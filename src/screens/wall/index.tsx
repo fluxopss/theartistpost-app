@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { View } from "react-native";
+import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
 
 import { useEvents, usePosts } from "@/api/hooks";
 import { GenreRail, type GenreId } from "@/components/genre-rail";
@@ -10,7 +11,7 @@ import { ScreenScroll } from "@/components/screen-scroll";
 import { ThemedText } from "@/components/themed-text";
 import { copy } from "@/content/site";
 import { tapLane } from "@/domain/stage/lanes";
-import { screenMargin, spacing } from "@/theme";
+import { duration, screenMargin, spacing } from "@/theme";
 
 import { FramesSection } from "./frames-section";
 import { KindnessShelf } from "./kindness-shelf";
@@ -35,6 +36,7 @@ export function WallScreen() {
   const posts = usePosts(lane ? laneTag[lane.id] : undefined);
   const events = useEvents();
   const [refreshing, setRefreshing] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   // Scroll geometry for "load more near the end of the grid". Refs, not
   // state: they change every frame and never need a render.
@@ -82,7 +84,10 @@ export function WallScreen() {
         loadMoreIfNear();
       }}
     >
-      <View style={{ gap: spacing.sm }}>
+      <Animated.View
+        entering={reduceMotion ? undefined : FadeInUp.duration(duration.slow).springify()}
+        style={{ gap: spacing.sm }}
+      >
         <View style={{ gap: spacing.xs }}>
           <ThemedText variant="eyebrow" tone="spark-teal">
             {copy.wall.kicker}
@@ -100,7 +105,7 @@ export function WallScreen() {
             {lane.wallLine}
           </ThemedText>
         ) : null}
-      </View>
+      </Animated.View>
 
       <View
         onLayout={(e) => {
