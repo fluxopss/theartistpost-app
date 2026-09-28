@@ -4,7 +4,7 @@ import { router, Stack } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 
-import { useAuth, studioApi } from "@/auth";
+import { useAuth, studioApi, displayHandle } from "@/auth";
 import { isApiError } from "@/api/errors";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
@@ -94,18 +94,18 @@ export function ComposeStudioScreen() {
     setBusy(true);
     setError(null);
     try {
-      const uploaded = await studioApi.upload({
+      const uploaded = await studioApi.uploadMedia({
         uri: localUri,
         name: fileName,
         mimeType,
       });
       const created = await studioApi.createPost({
         title: parsed.data.title,
-        description: parsed.data.description,
+        caption: parsed.data.description,
         tags: parsed.data.tags,
         visibility: parsed.data.visibility,
         mediaUrl: uploaded.url,
-        mediaType: uploaded.mediaType ?? "IMAGE",
+        mediaType: uploaded.mediaType,
       });
       setDone({ slug: created.slug, status: created.status });
     } catch (cause) {
@@ -164,7 +164,7 @@ export function ComposeStudioScreen() {
       <ScreenScroll>
         <View style={{ gap: spacing.xxs }}>
           <ThemedText variant="eyebrow" tone="spark-teal">
-            {user?.handle ? `@${user.handle}` : user?.name}
+            {displayHandle(user) ? `@${displayHandle(user)}` : user?.name}
           </ThemedText>
           <ThemedText variant="title2" accessibilityRole="header">
             Put a piece on the stage

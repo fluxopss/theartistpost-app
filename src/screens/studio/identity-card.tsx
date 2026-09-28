@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { View } from "react-native";
 
-import { useAuth } from "@/auth";
+import { displayHandle, useAuth } from "@/auth";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { ThemedText } from "@/components/themed-text";
@@ -50,11 +50,8 @@ export function IdentityCard() {
   const copy = gateCopy(gate.kind);
 
   const displayName = user?.name ?? studio.displayName;
-  const subtitle = user?.handle
-    ? `@${user.handle}`
-    : user?.email
-      ? user.email
-      : studio.city;
+  const handle = displayHandle(user);
+  const subtitle = handle ? `@${handle}` : user?.email ? user.email : studio.city;
   const initial = displayName.trim().charAt(0).toUpperCase();
   const summary = [copy.kicker, displayName, subtitle].filter(Boolean).join(". ");
 
