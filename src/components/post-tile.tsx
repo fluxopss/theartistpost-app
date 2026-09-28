@@ -14,8 +14,8 @@ const TILE_RATIO = 4 / 5;
 
 /**
  * One work on the wall: its image (or an honest media label when there's no
- * photograph to show), title, and artist. Tap opens the work; on iOS a
- * long-press previews it. Without a `post` it renders its loading shape.
+ * photograph to show), title, and artist. Tap opens the work; artist name
+ * opens the profile. On iOS a long-press previews the work.
  */
 export function PostTile({ post, style }: { post?: PostSummaryDTO; style?: StyleProp<ViewStyle> }) {
   const palette = useBrandColors();
@@ -35,15 +35,13 @@ export function PostTile({ post, style }: { post?: PostSummaryDTO; style?: Style
     mediaPresentation(post.media) === "image" && post.media.url ? originUrl(post.media.url) : null;
 
   return (
-    <View style={style}>
+    <View style={[{ gap: spacing.xs }, style]}>
       <Link href={{ pathname: "/post/[slug]", params: { slug: post.slug } }} asChild>
         <Link.Trigger>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${post.title}, by ${post.artist.name}. ${kind}.`}
             accessibilityHint="Opens the work"
-            // No `style` callback here: Link's asChild Slot merges `style` as an
-            // object and would drop a function. Pressed state styles the child.
           >
             {({ pressed }) => (
               <View style={{ gap: spacing.xs, opacity: pressed ? 0.82 : 1 }}>
@@ -71,19 +69,37 @@ export function PostTile({ post, style }: { post?: PostSummaryDTO; style?: Style
                     </ThemedText>
                   )}
                 </View>
-                <View style={{ gap: spacing.xxs }}>
-                  <ThemedText variant="headline" numberOfLines={2}>
-                    {post.title}
-                  </ThemedText>
-                  <ThemedText variant="footnote" tone="muted" numberOfLines={1}>
-                    {post.artist.name}
-                  </ThemedText>
-                </View>
+                <ThemedText variant="headline" numberOfLines={2}>
+                  {post.title}
+                </ThemedText>
               </View>
             )}
           </Pressable>
         </Link.Trigger>
         <Link.Preview />
+      </Link>
+
+      <Link
+        href={{ pathname: "/artist/[handle]", params: { handle: post.artist.handle } }}
+        asChild
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Artist ${post.artist.name}`}
+          accessibilityHint="Opens the artist’s profile"
+          hitSlop={8}
+        >
+          {({ pressed }) => (
+            <ThemedText
+              variant="footnote"
+              tone="muted"
+              numberOfLines={1}
+              style={{ opacity: pressed ? 0.7 : 1 }}
+            >
+              {post.artist.name}
+            </ThemedText>
+          )}
+        </Pressable>
       </Link>
     </View>
   );

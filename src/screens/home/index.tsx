@@ -25,6 +25,7 @@ import { NightTeaser } from "./night-teaser";
 import { StageBand } from "./stage-band";
 import { SubscribeForm } from "./subscribe-form";
 import { VisitSection } from "./visit-section";
+import { WorksTeaser } from "./works-teaser";
 
 export function HomeScreen() {
   const palette = useBrandColors();
@@ -69,6 +70,8 @@ export function HomeScreen() {
 
         <View style={{ paddingHorizontal: screenMargin, gap: spacing.xxxl }}>
           <NightTeaser />
+
+          <WorksTeaser />
 
           <View style={{ gap: spacing.sm }}>
             <SectionHeader eyebrow={copy.house.kicker} eyebrowTone="spark-gold" title="Step through a door" />
