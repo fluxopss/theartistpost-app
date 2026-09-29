@@ -5,6 +5,7 @@ import { ListGroup, ListRow } from "@/components/list-row";
 import { ScreenScroll } from "@/components/screen-scroll";
 
 import { AboutAppGroup } from "./about-app-group";
+import { AccountProfileGroup } from "./account-profile-group";
 import { AppearanceGroup } from "./appearance-group";
 import { DeviceDataGroup } from "./device-data-group";
 import { StudioFields } from "./studio-fields";
@@ -52,6 +53,7 @@ export function SettingsScreen() {
             />
           )}
         </ListGroup>
+        <AccountProfileGroup />
         <StudioFields />
         <AppearanceGroup />
         <DeviceDataGroup />

@@ -1,9 +1,10 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Share, View } from "react-native";
 
+import { useAuth } from "@/auth";
 import { originUrl } from "@/api/client";
 import { isApiError } from "@/api/errors";
-import { usePost } from "@/api/hooks";
+import { useLikeStatus, usePost, useToggleLike } from "@/api/hooks";
 import type { PostDetailDTO } from "@/api/types";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
@@ -77,8 +78,13 @@ function TagList({ tags }: { tags: PostDetailDTO["tags"] }) {
 }
 
 function PostBody({ post }: { post: PostDetailDTO }) {
+  const { user } = useAuth();
   const { isPostSaved, togglePost } = useSaves();
   const saved = isPostSaved(post.id);
+  const likeStatus = useLikeStatus(post.slug, Boolean(user));
+  const toggleLike = useToggleLike(post.slug);
+  const liked = likeStatus.data?.likedByMe === true;
+  const likeCount = likeStatus.data?.likeCount ?? post.likeCount;
   const webUrl = originUrl(`/post/${post.slug}`);
   const date = published(post.publishedAt);
 
@@ -98,6 +104,21 @@ function PostBody({ post }: { post: PostDetailDTO }) {
       </View>
 
       <View style={{ flexDirection: "row", gap: spacing.xs }}>
+        <Button
+          title={liked ? `Liked · ${likeCount}` : `Like · ${likeCount}`}
+          icon={liked ? "heartFill" : "heart"}
+          variant="secondary"
+          accessibilityLabel={liked ? "Remove like" : "Like this work"}
+          loading={toggleLike.isPending}
+          onPress={() => {
+            if (!user) {
+              router.push("/join");
+              return;
+            }
+            void toggleLike.mutateAsync().catch(() => {});
+          }}
+          style={{ flex: 1 }}
+        />
         <Button
           title={saved ? "Saved" : "Save"}
           icon={saved ? "bookmarkFill" : "bookmark"}

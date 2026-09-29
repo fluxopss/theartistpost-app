@@ -39,8 +39,24 @@ export type PostSummaryDTO = {
 export type CommentDTO = {
   id: string;
   body: string;
-  author: { name: string };
+  author: { name: string; handle?: string | null };
   createdAt: string;
+};
+
+export type CommentsPageDTO = {
+  items: CommentDTO[];
+  nextCursor: string | null;
+  commentCount: number;
+};
+
+export type LikeStateDTO = {
+  liked: boolean;
+  likeCount: number;
+};
+
+export type LikeStatusDTO = {
+  likedByMe: boolean | null;
+  likeCount: number;
 };
 
 export type PostDetailDTO = PostSummaryDTO & { comments: CommentDTO[] };
