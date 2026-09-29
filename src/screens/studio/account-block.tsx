@@ -35,7 +35,12 @@ export function AccountBlock() {
                     : "Member pass"
               }
               showChevron={false}
-              separator={canCompose}
+            />
+            <ListRow
+              icon="people"
+              title="Edit your pass"
+              subtitle="Display name and studio bio"
+              onPress={() => router.push("/settings")}
             />
             {canCompose ? (
               <ListRow

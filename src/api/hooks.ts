@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "./client";
 import type {
@@ -9,7 +9,10 @@ import type {
   FeaturedNightDTO,
   AcceptedResult,
   InvolveInput,
+  LikeStateDTO,
+  LikeStatusDTO,
   MeDTO,
+  CommentDTO,
   PostDetailDTO,
   PostPageDTO,
   RsvpInput,
@@ -24,6 +27,7 @@ export const queryKeys = {
   posts: (tag?: string) => ["posts", tag ?? "all"] as const,
   feed: (tag?: string) => ["feed", "explore", tag ?? "all"] as const,
   post: (slug: string) => ["post", slug] as const,
+  like: (slug: string) => ["post", slug, "like"] as const,
   artist: (handle: string) => ["artist", handle] as const,
   artistTimeline: (handle: string) => ["artist", handle, "timeline"] as const,
   tags: ["tags"] as const,
@@ -127,6 +131,58 @@ export function useTags() {
   return useQuery({
     queryKey: queryKeys.tags,
     queryFn: ({ signal }) => api.get<TagDTO[]>("/tags", signal),
+  });
+}
+
+export function useLikeStatus(slug: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.like(slug),
+    queryFn: ({ signal }) => api.get<LikeStatusDTO>(`/posts/${encodeURIComponent(slug)}/like`, signal),
+    enabled: Boolean(slug) && enabled,
+  });
+}
+
+export function useToggleLike(slug: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<LikeStateDTO>(`/posts/${encodeURIComponent(slug)}/like`, {}),
+    onSuccess: (data) => {
+      client.setQueryData<LikeStatusDTO>(queryKeys.like(slug), {
+        likedByMe: data.liked,
+        likeCount: data.likeCount,
+      });
+      client.setQueryData<PostDetailDTO>(queryKeys.post(slug), (prev) =>
+        prev ? { ...prev, likeCount: data.likeCount } : prev,
+      );
+    },
+  });
+}
+
+export function useCreateComment(slug: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: string) =>
+      api.post<{ comment: CommentDTO }>(`/posts/${encodeURIComponent(slug)}/comments`, { body }),
+    onSuccess: ({ comment }) => {
+      client.setQueryData<PostDetailDTO>(queryKeys.post(slug), (prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          commentCount: prev.commentCount + 1,
+          comments: [comment, ...prev.comments],
+        };
+      });
+    },
+  });
+}
+
+export function useUpdateMe() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name?: string; bio?: string | null }) => api.patch<MeDTO>("/me", input),
+    onSuccess: (data) => {
+      client.setQueryData(queryKeys.me, data);
+    },
   });
 }
 
