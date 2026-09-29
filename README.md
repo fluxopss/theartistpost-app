@@ -17,10 +17,13 @@ Sibling repo: [`theartistpost`](https://github.com/fluxopss/theartistpost) (Next
 ```bash
 npm install
 npx expo run:android   # first run: builds a dev client (Android SDK required)
-npx expo start         # subsequent runs / iOS via Expo Go or a dev client
+npx expo start         # defaults to development build (expo-dev-client is installed)
+npm run start:go       # Expo Go + tunnel — no Apple Developer account needed
 ```
 
-iOS dev/simulator builds run on EAS cloud (`eas build --profile development-simulator`) — this is developed on Windows, no local Xcode.
+`start:go` forces Expo Go (`exp://…`) even though `expo-dev-client` is installed. On SDK 57 the app’s native deps (`@expo/ui`, `expo-glass-effect`, `react-native-keyboard-controller`, `NativeTabs`, `expo-sqlite`) ship inside Expo Go, so a physical iPhone can open the project without a custom IPA.
+
+iOS device **development builds** still need an Apple team on EAS. Simulator builds run on EAS cloud (`eas build --profile development-simulator`) — this is developed on Windows, no local Xcode.
 
 ```bash
 npm run typecheck   # tsc --noEmit
