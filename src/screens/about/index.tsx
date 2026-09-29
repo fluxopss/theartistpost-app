@@ -92,7 +92,7 @@ export function AboutScreen() {
             icon="donate"
             tone="coral"
             size="lg"
-            accessibilityHint="Opens PayPal"
+            accessibilityHint="Opens the donate screen"
             onPress={contact.donate}
           />
           <ListGroup>

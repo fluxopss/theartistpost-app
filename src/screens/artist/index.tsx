@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { copy } from "@/content/site";
 import { radius, spacing } from "@/theme";
-import { tabRoutes } from "@/utils/links";
+import { contact, tabRoutes } from "@/utils/links";
 
 import { SocialLinks } from "./social-links";
 import { TimelineRow } from "./timeline-row";
@@ -124,7 +124,15 @@ function ArtistTimelineBody({
         <EmptyState
           icon="wall"
           title="Nothing on the timeline yet"
-          body={`When ${artist.name} shares approved work, it appears here.`}
+          body={`When ${artist.name} shares approved work, it appears here. ${copy.donate.emptySupportBody}`}
+          action={
+            <Button
+              title={copy.donate.supportHouseCta}
+              icon="donate"
+              tone="coral"
+              onPress={contact.donate}
+            />
+          }
         />
       ) : (
         <View style={{ gap: spacing.xxl }}>

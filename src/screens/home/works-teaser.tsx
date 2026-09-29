@@ -3,11 +3,13 @@ import { View } from "react-native";
 import { isApiError } from "@/api/errors";
 import { usePosts } from "@/api/hooks";
 import { AsyncView } from "@/components/async-view";
+import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
 import { PostGrid } from "@/components/post-grid";
 import { SectionHeader } from "@/components/section-header";
+import { copy } from "@/content/site";
 import { spacing } from "@/theme";
-import { tabRoutes } from "@/utils/links";
+import { contact, tabRoutes } from "@/utils/links";
 
 /**
  * First row of approved work on Home. Artist names on tiles open profiles;
@@ -39,7 +41,15 @@ export function WorksTeaser() {
           <EmptyState
             icon="sparkle"
             title="The wall is being prepared"
-            body="When approved artists hang work, it shows up here and on the Wall."
+            body={`When approved artists hang work, it shows up here and on the Wall. ${copy.donate.emptySupportBody}`}
+            action={
+              <Button
+                title={copy.donate.supportHouseCta}
+                icon="donate"
+                tone="coral"
+                onPress={contact.donate}
+              />
+            }
           />
         }
       >

@@ -28,6 +28,7 @@ const webToNative: Record<string, Href> = {
   "/about": "/about",
   "/history": "/history",
   "/supporters": "/supporters",
+  "/donate": "/donate",
 };
 
 /** Donation pages must open in the system browser, not an in-app view. */
@@ -70,6 +71,11 @@ export const contact = {
     const url = process.env.EXPO_OS === "ios" ? `maps:0,0?q=${q}` : `geo:0,0?q=${q}`;
     Linking.openURL(url).catch(() => Linking.openURL(site.mapsUrl));
   },
-  donate: () => Linking.openURL(links.donate),
+  /** In-app donate story — PayPal opens from that screen via system browser. */
+  donate: () => {
+    router.push("/donate");
+  },
+  paypalOnce: () => Linking.openURL(links.donate),
+  paypalMonthly: () => Linking.openURL(links.donateMonthly),
   merch: () => void openExternal(links.merch),
 };

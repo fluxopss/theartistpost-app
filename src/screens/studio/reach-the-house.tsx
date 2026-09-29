@@ -35,10 +35,9 @@ export function ReachTheHouse() {
       <ListRow
         icon="donate"
         title="Donate"
-        subtitle="Support local arts"
-        accessibilityHint="Opens PayPal in your browser"
+        subtitle="Support the house"
+        accessibilityHint="Opens the donate screen"
         onPress={contact.donate}
-        external
         separator={false}
       />
     </ListGroup>
