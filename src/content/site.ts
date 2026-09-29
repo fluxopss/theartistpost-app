@@ -54,8 +54,16 @@ export const site = {
 } as const;
 
 export const links = {
+  /** Hosted PayPal Donate — one-time; monthly when enabled on the nonprofit account. */
   donate:
     "https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=3DCYEFGX7GXMY",
+  /**
+   * Same hosted button. PayPal shows “Make this a monthly donation” when recurring
+   * is enabled on the nonprofit PayPal account.
+   */
+  donateMonthly:
+    "https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=3DCYEFGX7GXMY",
+  donatePage: "/donate",
   merch: "https://www.bonfire.com/love-all-51/",
   artistAgreement: "https://forms.gle/uS58nk2Bpgx45Uwv5",
   partnerSubCulture: "https://sub-culture.org/",
@@ -266,6 +274,34 @@ export const copy = {
     liveRoomTitle: "The live room",
     liveRoomBody:
       "Hacienda on Clematis is where TAP meets people in the room — rotating showcases, donation-based merch, and a space built to connect.",
+  },
+  donate: {
+    kicker: "Support the house",
+    title: "Keep Clematis open for artists",
+    lead: "Gifts fund free artist showcase space at Hacienda, the kindness programs, community nights, and the long walk toward a permanent home for art — not a paywall on publishing.",
+    onceCta: "Give once with PayPal",
+    monthlyCta: "Give monthly with PayPal",
+    monthlyNote:
+      "On PayPal, choose Make this a monthly donation when that option is shown.",
+    venmoCta: "Venmo",
+    fundsTitle: "What gifts fund",
+    pathsTitle: "Donate · Sponsor · Shop",
+    pathsLead:
+      "Three different paths. Only a gift to the nonprofit is a donation — sponsorship and merch are labeled plainly.",
+    donatePathTitle: "Donate",
+    donatePathBody:
+      "A charitable gift through PayPal or Venmo. Receipts come from the processor.",
+    sponsorPathTitle: "Sponsor / partner",
+    sponsorPathBody:
+      "Businesses underwriting a night or room — recognition, not labeled as a personal tax-deductible donation here.",
+    sponsorCta: "Partner with us",
+    shopPathTitle: "Shop",
+    shopPathBody:
+      "Kindness Always merch on Bonfire is a purchase that funds the mission.",
+    shopCta: "Shop Kindness Always",
+    transparencyTitle: "Transparency",
+    supportHouseCta: "Support the house",
+    emptySupportBody: "While the plaster waits, gifts keep the house open for artists.",
   },
   schedule: {
     title: "Artist Schedule",

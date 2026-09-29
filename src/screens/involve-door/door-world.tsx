@@ -71,7 +71,7 @@ export function DoorWorld({ door }: { door: InvolveDoor }) {
           </View>
           <View style={{ gap: spacing.sm }}>
             {giveActions.map((action) =>
-              action.id === "paypal" ? (
+              action.id === "donate" ? (
                 <Button
                   key={action.id}
                   title={action.label}

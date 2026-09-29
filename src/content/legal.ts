@@ -107,7 +107,7 @@ export const legalDocs: Record<LegalDocId, LegalDoc> = {
           // native: the inline "(donate)" anchor after "PayPal" became the Donate link below.
           "This is a community platform for local artists, small businesses, and neighbors. Showcase space is free. Donations support local arts, artists, venues, and community events. They are processed by PayPal and are not a purchase of goods from this app unless you order merch through Bonfire.",
         ],
-        links: [{ label: "Donate", href: links.donate }],
+        links: [{ label: "Donate", href: "/donate" }],
       },
       {
         heading: "Your content",
@@ -167,11 +167,12 @@ export const legalDocs: Record<LegalDocId, LegalDoc> = {
       {
         heading: "Donations and merch",
         body: [
-          `Donate via PayPal or Venmo ${site.venmo}. Order Kindness Always merch on Bonfire or call to place an order.`,
+          `Open Donate for the house story, one-time and monthly PayPal, and Venmo ${site.venmo}. Kindness Always merch on Bonfire is a purchase that funds the mission. Sponsorships go through Get Involved — partner.`,
         ],
         links: [
-          { label: "Donate with PayPal", href: links.donate },
+          { label: "Donate", href: "/donate" },
           { label: "Kindness Always merch on Bonfire", href: links.merch },
+          { label: "Partner / sponsor", href: "/get-involved" },
         ],
       },
     ],

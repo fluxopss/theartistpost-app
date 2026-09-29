@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/themed-text";
 import { copy } from "@/content/site";
 import type { TapLane } from "@/domain/stage/lanes";
 import { spacing } from "@/theme";
+import { contact } from "@/utils/links";
 
 type PostsQuery = ReturnType<typeof usePosts>;
 
@@ -70,7 +71,19 @@ export function WorksSection({
               action={<Button title="Show all" variant="secondary" onPress={onClearLane} />}
             />
           ) : (
-            <EmptyState icon="sparkle" title={copy.wall.preparingTitle} body={copy.wall.preparingBody} />
+            <EmptyState
+              icon="sparkle"
+              title={copy.wall.preparingTitle}
+              body={`${copy.wall.preparingBody} ${copy.donate.emptySupportBody}`}
+              action={
+                <Button
+                  title={copy.donate.supportHouseCta}
+                  icon="donate"
+                  tone="coral"
+                  onPress={contact.donate}
+                />
+              }
+            />
           )
         }
       >

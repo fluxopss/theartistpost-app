@@ -7,8 +7,8 @@ import { contact, followHref, tabRoutes } from "@/utils/links";
 
 /** Follow a door's web-copy link: native route, system mail, or browser. */
 export function openDoorLink(link: InvolveDoorLink) {
-  if (link.href === links.donate) {
-    void contact.donate();
+  if (link.href === "/donate" || link.href === links.donate) {
+    contact.donate();
     return;
   }
   if (link.href === "/artist-schedule") {
@@ -22,7 +22,7 @@ export function openDoorLink(link: InvolveDoorLink) {
 export function doorLinkIcon(link: InvolveDoorLink): IconName {
   if (link.href.startsWith("mailto:")) return "email";
   if (link.href === links.artistAgreement) return "pencil";
-  if (link.href === links.donate) return "donate";
+  if (link.href === "/donate" || link.href === links.donate) return "donate";
   switch (link.href) {
     case "/artist-schedule":
       return "schedule";

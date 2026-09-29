@@ -40,7 +40,7 @@ export function VisitBlock() {
           icon="donate"
           label="Donate"
           tone="coral"
-          accessibilityHint="Opens PayPal in your browser"
+          accessibilityHint="Opens the donate screen"
           onPress={contact.donate}
         />
       </View>
