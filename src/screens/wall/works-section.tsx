@@ -1,7 +1,7 @@
 import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
-import type { usePosts } from "@/api/hooks";
+import type { useExploreFeed } from "@/api/hooks";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
@@ -13,10 +13,10 @@ import type { TapLane } from "@/domain/stage/lanes";
 import { spacing } from "@/theme";
 import { contact } from "@/utils/links";
 
-type PostsQuery = ReturnType<typeof usePosts>;
+type FeedQuery = ReturnType<typeof useExploreFeed>;
 
 /** What sits under the grid: the next page loading, a failed page, or a way to ask for more. */
-function WorksFooter({ query }: { query: PostsQuery }) {
+function WorksFooter({ query }: { query: FeedQuery }) {
   if (query.isFetchingNextPage) return <PostGrid loadingCount={2} />;
   if (query.isFetchNextPageError) {
     return (
@@ -44,7 +44,7 @@ export function WorksSection({
   lane,
   onClearLane,
 }: {
-  query: PostsQuery;
+  query: FeedQuery;
   lane: TapLane | null;
   onClearLane: () => void;
 }) {

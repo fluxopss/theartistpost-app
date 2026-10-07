@@ -18,8 +18,9 @@ function isAuthUser(value: unknown): value is AuthUser {
 }
 
 /**
- * Passwordless session on device. Token is the house HMAC (same payload as
- * web `tap_session`); never put it in AsyncStorage / SQLite.
+ * Passwordless session on device. Token is the house HMAC Bearer (same payload
+ * as web `tap_session`) or, once JWKS lands, a Supabase access token after
+ * `/auth/link`. Never put it in AsyncStorage.
  */
 export const sessionStore = {
   async read(): Promise<AuthSession | null> {

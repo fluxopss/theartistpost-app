@@ -8,7 +8,9 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
+        "EXPO_PUBLIC_SUPABASE_URL": "",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": ""
       }
     },
     "development-simulator": {
@@ -21,7 +23,9 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
+        "EXPO_PUBLIC_SUPABASE_URL": "",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": ""
       }
     },
     "ios-simulator": {
@@ -40,7 +44,9 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
+        "EXPO_PUBLIC_SUPABASE_URL": "",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": ""
       }
     }
   },

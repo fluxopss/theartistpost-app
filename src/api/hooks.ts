@@ -146,6 +146,30 @@ export function useToggleLike(slug: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: () => api.post<LikeStateDTO>(`/posts/${encodeURIComponent(slug)}/like`, {}),
+    onMutate: async () => {
+      await client.cancelQueries({ queryKey: queryKeys.like(slug) });
+      const previousLike = client.getQueryData<LikeStatusDTO>(queryKeys.like(slug));
+      const previousPost = client.getQueryData<PostDetailDTO>(queryKeys.post(slug));
+      const wasLiked = previousLike?.likedByMe === true;
+      const baseCount = previousLike?.likeCount ?? previousPost?.likeCount ?? 0;
+      const nextCount = Math.max(0, baseCount + (wasLiked ? -1 : 1));
+      client.setQueryData<LikeStatusDTO>(queryKeys.like(slug), {
+        likedByMe: !wasLiked,
+        likeCount: nextCount,
+      });
+      client.setQueryData<PostDetailDTO>(queryKeys.post(slug), (prev) =>
+        prev ? { ...prev, likeCount: nextCount } : prev,
+      );
+      return { previousLike, previousPost };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousLike !== undefined) {
+        client.setQueryData(queryKeys.like(slug), context.previousLike);
+      }
+      if (context?.previousPost !== undefined) {
+        client.setQueryData(queryKeys.post(slug), context.previousPost);
+      }
+    },
     onSuccess: (data) => {
       client.setQueryData<LikeStatusDTO>(queryKeys.like(slug), {
         likedByMe: data.liked,

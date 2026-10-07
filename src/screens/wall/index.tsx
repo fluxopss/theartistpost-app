@@ -5,7 +5,7 @@ import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 
 import { View } from "react-native";
 import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
 
-import { useEvents, usePosts } from "@/api/hooks";
+import { useEvents, useExploreFeed } from "@/api/hooks";
 import { GenreRail, type GenreId } from "@/components/genre-rail";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { ThemedText } from "@/components/themed-text";
@@ -33,7 +33,7 @@ const LOAD_AHEAD = 600;
 export function WallScreen() {
   const params = useLocalSearchParams<{ lane?: string }>();
   const lane = tapLane(params.lane);
-  const posts = usePosts(lane ? laneTag[lane.id] : undefined);
+  const feed = useExploreFeed(lane ? laneTag[lane.id] : undefined);
   const events = useEvents();
   const [refreshing, setRefreshing] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -46,8 +46,8 @@ export function WallScreen() {
   const loadMoreIfNear = () => {
     const { offsetY, height } = viewport.current;
     if (height === 0 || worksEndY.current === 0) return;
-    if (!posts.hasNextPage || posts.isFetching || posts.isFetchNextPageError) return;
-    if (offsetY + height + LOAD_AHEAD >= worksEndY.current) void posts.fetchNextPage();
+    if (!feed.hasNextPage || feed.isFetching || feed.isFetchNextPageError) return;
+    if (offsetY + height + LOAD_AHEAD >= worksEndY.current) void feed.fetchNextPage();
   };
 
   const setLane = (id: GenreId | null) => router.setParams({ lane: id ?? undefined });
@@ -61,7 +61,7 @@ export function WallScreen() {
   const refresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([posts.refetch(), events.refetch()]);
+      await Promise.all([feed.refetch(), events.refetch()]);
     } finally {
       setRefreshing(false);
     }
@@ -114,7 +114,7 @@ export function WallScreen() {
           loadMoreIfNear();
         }}
       >
-        <WorksSection query={posts} lane={lane} onClearLane={() => setLane(null)} />
+        <WorksSection query={feed} lane={lane} onClearLane={() => setLane(null)} />
       </View>
 
       <NightsSection query={events} />

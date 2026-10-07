@@ -10,21 +10,26 @@ import { ThemedText } from "@/components/themed-text";
 import { artistJoinSchema, memberJoinSchema, verifySchema } from "@/domain/auth/validation";
 import { tapGenres } from "@/content/stage";
 import { radius, spacing, spark, stageGlow, stageLine, stageNavy, useBrandColors } from "@/theme";
+import { tabRoutes } from "@/utils/links";
 
-type JoinDoor = "pick" | "member" | "artist" | "verify";
+type JoinDoor = "pick" | "member" | "artist" | "verify" | "done";
+
+type DoneKind = "member" | "artist_pending" | "artist" | "return";
 
 const MEDIUMS = tapGenres.map((g) => g.label);
 
 /**
  * Passwordless join matching the web house doors: member, artist studio,
- * or email-code return when the API ships it.
+ * or return pass (house email code today; Supabase OTP when env is set).
  */
 export function JoinScreen() {
   const palette = useBrandColors();
   const auth = useAuth();
   const [door, setDoor] = useState<JoinDoor>("pick");
+  const [doneKind, setDoneKind] = useState<DoneKind>("member");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [useHouseCode, setUseHouseCode] = useState(!auth.supabaseReady);
 
   const [memberName, setMemberName] = useState("");
   const [memberEmail, setMemberEmail] = useState("");
@@ -59,6 +64,11 @@ export function JoinScreen() {
     );
   }
 
+  const finish = (kind: DoneKind) => {
+    setDoneKind(kind);
+    setDoor("done");
+  };
+
   const submitMember = async () => {
     const parsed = memberJoinSchema.safeParse({ name: memberName, email: memberEmail });
     if (!parsed.success) {
@@ -73,7 +83,7 @@ export function JoinScreen() {
       setError(result.error);
       return;
     }
-    router.back();
+    finish("member");
   };
 
   const submitArtist = async () => {
@@ -96,7 +106,7 @@ export function JoinScreen() {
       setError(result.error);
       return;
     }
-    router.back();
+    finish(result.pendingApproval ? "artist_pending" : "artist");
   };
 
   const sendCode = async () => {
@@ -107,6 +117,16 @@ export function JoinScreen() {
     }
     setBusy(true);
     setError(null);
+    if (!useHouseCode && auth.supabaseReady) {
+      const result = await auth.requestSupabaseCode(email);
+      setBusy(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setCodeSent(true);
+      return;
+    }
     const result = await auth.requestCode(email);
     setBusy(false);
     if (!result.ok) {
@@ -124,13 +144,51 @@ export function JoinScreen() {
     }
     setBusy(true);
     setError(null);
+    if (!useHouseCode && auth.supabaseReady) {
+      const result = await auth.verifySupabaseCode(parsed.data);
+      setBusy(false);
+      if (!result.ok) {
+        setError(result.error);
+        if (result.houseFallback) {
+          setUseHouseCode(true);
+          setCodeSent(false);
+          setCode("");
+        }
+        return;
+      }
+      finish("return");
+      return;
+    }
     const result = await auth.verify(parsed.data);
     setBusy(false);
     if (!result.ok) {
       setError(result.error);
       return;
     }
-    router.back();
+    finish("return");
+  };
+
+  const doneCopy: Record<DoneKind, { kicker: string; title: string; body: string }> = {
+    member: {
+      kicker: "You’re in",
+      title: "Member pass on this phone",
+      body: "Like work, leave Wall notes, and RSVP with your pass. Artist publish opens after a studio request is approved.",
+    },
+    artist_pending: {
+      kicker: "Studio requested",
+      title: "Waiting on approval",
+      body: "Browse the house while Robbie reviews. Nothing hits The Wall until you’re approved — that’s the trust lock.",
+    },
+    artist: {
+      kicker: "Studio open",
+      title: "Your pass can publish",
+      body: "Head to Studio when you have a piece ready. The Wall only shows approved work.",
+    },
+    return: {
+      kicker: "Welcome back",
+      title: "Your pass is restored",
+      body: "Likes and Wall notes use this phone’s pass. Pick up where you left off on The Wall.",
+    },
   };
 
   return (
@@ -162,10 +220,17 @@ export function JoinScreen() {
           />
           <DoorPick
             title="I already joined"
-            body="Request an email code when the house API is ready."
+            body={
+              auth.supabaseReady
+                ? "Request an email code to restore your pass on this phone."
+                : "Request an email code from the house to restore your pass."
+            }
             tone={spark.gold}
             onPress={() => {
               setError(null);
+              setUseHouseCode(!auth.supabaseReady);
+              setCodeSent(false);
+              setCode("");
               setDoor("verify");
             }}
           />
@@ -270,7 +335,11 @@ export function JoinScreen() {
           <StageIntro
             kicker="Return pass"
             title="Email code"
-            body="When the house ships codes, they land here. Until then you’ll see an honest pause — never a fake login."
+            body={
+              useHouseCode
+                ? "We’ll send a short code to the email you joined with. If delivery isn’t configured yet, you’ll see an honest pause — never a fake login."
+                : "A code from Supabase Auth restores your pass; the house links it when `/auth/link` is live."
+            }
           />
           <TextField
             label="Email"
@@ -297,7 +366,43 @@ export function JoinScreen() {
             loading={busy}
             onPress={() => void (codeSent ? submitVerify() : sendCode())}
           />
+          {auth.supabaseReady && useHouseCode ? (
+            <Button
+              title="Try Supabase code instead"
+              variant="ghost"
+              onPress={() => {
+                setUseHouseCode(false);
+                setCodeSent(false);
+                setCode("");
+                setError(null);
+              }}
+            />
+          ) : null}
+          {auth.supabaseReady && !useHouseCode ? (
+            <Button
+              title="Use house email code"
+              variant="ghost"
+              onPress={() => {
+                setUseHouseCode(true);
+                setCodeSent(false);
+                setCode("");
+                setError(null);
+              }}
+            />
+          ) : null}
           <Button title="Back" variant="ghost" onPress={() => setDoor("pick")} />
+        </View>
+      ) : null}
+
+      {door === "done" ? (
+        <View style={{ gap: spacing.md }}>
+          <StageIntro
+            kicker={doneCopy[doneKind].kicker}
+            title={doneCopy[doneKind].title}
+            body={doneCopy[doneKind].body}
+          />
+          <Button title="See The Wall" tone="coral" onPress={() => router.replace(tabRoutes.wall)} />
+          <Button title="Back" variant="ghost" onPress={() => router.back()} />
         </View>
       ) : null}
 

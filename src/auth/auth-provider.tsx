@@ -12,6 +12,7 @@ import { isApiError } from "@/api/errors";
 
 import { authApi } from "./api";
 import { sessionStore } from "./session-store";
+import { getSupabase, isSupabaseAuthConfigured } from "./supabase";
 import { getAuthToken, setAuthToken } from "./token";
 import {
   resolveCanPublish,
@@ -33,12 +34,22 @@ type AuthContextValue = {
   gate: StudioGate;
   canCompose: boolean;
   canPublish: boolean;
+  /** True when EXPO_PUBLIC_SUPABASE_* is set — return door can use Supabase OTP. */
+  supabaseReady: boolean;
   /** Last restore/join error worth showing (cleared on success). */
   lastError: string | null;
   joinMember: (input: JoinMemberInput) => Promise<{ ok: true } | { ok: false; error: string }>;
   joinArtist: (input: JoinArtistInput) => Promise<{ ok: true; pendingApproval: boolean } | { ok: false; error: string }>;
   requestCode: (email: string) => Promise<{ ok: true; debugCode?: string } | { ok: false; error: string }>;
   verify: (input: VerifyInput) => Promise<{ ok: true } | { ok: false; error: string }>;
+  /**
+   * Supabase email OTP for returning visitors. Stores the access token as Bearer,
+   * then calls `/auth/link` (or `/auth/me` once JWKS accepts the JWT).
+   */
+  requestSupabaseCode: (email: string) => Promise<{ ok: true } | { ok: false; error: string }>;
+  verifySupabaseCode: (
+    input: VerifyInput,
+  ) => Promise<{ ok: true } | { ok: false; error: string; houseFallback?: boolean }>;
   /** Revalidate via `/auth/me` (and refresh token when near expiry). */
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -242,11 +253,117 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const requestSupabaseCode = useCallback(async (email: string) => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      const message = "Supabase Auth is not configured on this build.";
+      setLastError(message);
+      return { ok: false as const, error: message };
+    }
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: { shouldCreateUser: false },
+      });
+      if (error) {
+        const message = error.message || "Could not send a house code.";
+        setLastError(message);
+        return { ok: false as const, error: message };
+      }
+      setLastError(null);
+      return { ok: true as const };
+    } catch (error) {
+      const message = friendlyAuthError(error, "Could not send a house code.");
+      setLastError(message);
+      return { ok: false as const, error: message };
+    }
+  }, []);
+
+  const verifySupabaseCode = useCallback(async (input: VerifyInput) => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      const message = "Supabase Auth is not configured on this build.";
+      setLastError(message);
+      return { ok: false as const, error: message };
+    }
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: input.email.trim().toLowerCase(),
+        token: input.code.trim(),
+        type: "email",
+      });
+      if (error || !data.session?.access_token) {
+        const message = error?.message || "That code did not open the door.";
+        setLastError(message);
+        return { ok: false as const, error: message };
+      }
+
+      const accessToken = data.session.access_token;
+      const expiresAt = data.session.expires_at
+        ? new Date(data.session.expires_at * 1000).toISOString()
+        : undefined;
+      setAuthToken(accessToken);
+
+      try {
+        const linked = await authApi.link({});
+        const session = sessionFromPayload(linked);
+        await applySession({ ...session, expiresAt: session.expiresAt || expiresAt });
+        setUser(linked.user);
+        setCanPublish(resolveCanPublish(linked.user, session.canPublish));
+        setLastError(null);
+        return { ok: true as const };
+      } catch (linkError) {
+        if (isApiError(linkError) && (linkError.code === "not_found" || linkError.status === 404)) {
+          // JWKS /auth/link not deployed yet — clear JWT so HMAC house path can proceed.
+          setAuthToken(null);
+          const message =
+            "The house link door is not open yet. Use the email code from The Artist Post instead.";
+          setLastError(message);
+          return { ok: false as const, error: message, houseFallback: true };
+        }
+        try {
+          const me = await authApi.me();
+          const session: AuthSession = {
+            token: accessToken,
+            user: me.user,
+            expiresAt,
+            canPublish: me.canPublish,
+          };
+          await applySession(session);
+          setUser(me.user);
+          setCanPublish(me.canPublish);
+          setLastError(null);
+          return { ok: true as const };
+        } catch {
+          setAuthToken(null);
+          const message = friendlyAuthError(
+            linkError,
+            "Signed in with Supabase, but the house could not link your pass yet.",
+          );
+          setLastError(message);
+          return { ok: false as const, error: message, houseFallback: true };
+        }
+      }
+    } catch (error) {
+      const message = friendlyAuthError(error, "That code did not open the door.");
+      setLastError(message);
+      return { ok: false as const, error: message };
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       await authApi.logout();
     } catch {
       // Client clears regardless — Bearer is stateless.
+    }
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // Local clear still runs.
+      }
     }
     await applySession(null);
     setUser(null);
@@ -257,6 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = useCallback(() => setLastError(null), []);
 
   const gate = studioGate(user);
+  const supabaseReady = isSupabaseAuthConfigured();
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
@@ -264,11 +382,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       gate,
       canCompose: canPublish,
       canPublish,
+      supabaseReady,
       lastError,
       joinMember,
       joinArtist,
       requestCode,
       verify,
+      requestSupabaseCode,
+      verifySupabaseCode,
       refresh: hydrate,
       signOut,
       clearError,
@@ -278,11 +399,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       gate,
       canPublish,
+      supabaseReady,
       lastError,
       joinMember,
       joinArtist,
       requestCode,
       verify,
+      requestSupabaseCode,
+      verifySupabaseCode,
       hydrate,
       signOut,
       clearError,

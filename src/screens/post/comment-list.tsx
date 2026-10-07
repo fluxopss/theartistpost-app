@@ -59,18 +59,18 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
     <View style={{ gap: spacing.md }}>
       <View style={{ gap: spacing.xxs }}>
         <ThemedText variant="subheadline">
-          {plural(post.likeCount, "like")} · {plural(post.commentCount, "comment")}
+          {plural(post.commentCount, "Wall note")}
         </ThemedText>
         <ThemedText variant="footnote" tone="muted">
           {user
-            ? "Notes from your pass land on the shared Wall."
-            : "Join to leave a public note on this work."}
+            ? "Notes from your pass land on the shared Wall — short, public, from the community."
+            : "Join to leave a public Wall note on this work."}
         </ThemedText>
       </View>
 
       {comments.length ? (
         <ListGroup
-          header="Comments"
+          header="Wall notes"
           footer={capped ? `Showing the newest ${comments.length}.` : undefined}
         >
           {comments.map((comment, index) => {
@@ -106,14 +106,14 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
         </ListGroup>
       ) : (
         <ThemedText variant="footnote" tone="muted">
-          No comments yet.
+          No Wall notes yet — be the first from the house.
         </ThemedText>
       )}
 
       {user ? (
         <View style={{ gap: spacing.sm }}>
           <TextField
-            label="Leave a note"
+            label="Leave a Wall note"
             value={body}
             onChangeText={setBody}
             maxLength={280}
@@ -127,7 +127,7 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
             editable={!createComment.isPending}
           />
           <Button
-            title={createComment.isPending ? "Sending…" : "Leave a note"}
+            title={createComment.isPending ? "Sending…" : "Leave a Wall note"}
             onPress={() => void submit()}
             loading={createComment.isPending}
             disabled={createComment.isPending}
@@ -135,7 +135,7 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
         </View>
       ) : (
         <Button
-          title="Join to comment"
+          title="Join to leave a note"
           variant="secondary"
           onPress={() => router.push("/join")}
         />
