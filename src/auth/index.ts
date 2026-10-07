@@ -1,6 +1,7 @@
 export { AuthProvider, useAuth } from "./auth-provider";
 export { authApi, studioApi } from "./api";
 export { sessionStore } from "./session-store";
+export { getSupabase, isSupabaseAuthConfigured } from "./supabase";
 export {
   canComposeMedia,
   displayHandle,

@@ -45,6 +45,15 @@ export type StudioPostsPage = {
   nextCursor: string | null;
 };
 
+export type LinkSessionInput = {
+  /** Optional artist door fields when first linking a new Prisma user. */
+  door?: "member" | "artist";
+  name?: string;
+  handle?: string;
+  medium?: string;
+  intent?: string;
+};
+
 export const authApi = {
   joinMember: (input: JoinMemberInput) =>
     api.post<SessionPayload>("/auth/join", { door: "member", ...input }),
@@ -56,6 +65,12 @@ export const authApi = {
     api.post<{ sent: true; expiresAt: string; debugCode?: string }>("/auth/request-code", { email }),
 
   verify: (input: VerifyInput) => api.post<SessionPayload>("/auth/verify", input),
+
+  /**
+   * Exchange a Supabase access token (already on Authorization) for a house session.
+   * Lands with the web JWKS PR — until then callers treat 404 as “not open yet”.
+   */
+  link: (input: LinkSessionInput = {}) => api.post<SessionPayload>("/auth/link", input),
 
   refresh: () => api.post<SessionPayload>("/auth/refresh", {}),
 

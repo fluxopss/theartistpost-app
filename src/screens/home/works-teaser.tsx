@@ -1,7 +1,7 @@
 import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
-import { usePosts } from "@/api/hooks";
+import { useExploreFeed } from "@/api/hooks";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
@@ -16,7 +16,7 @@ import { contact, tabRoutes } from "@/utils/links";
  * empty is honest until the house publishes.
  */
 export function WorksTeaser() {
-  const query = usePosts();
+  const query = useExploreFeed();
   const items = query.data?.pages[0]?.items.slice(0, 4);
 
   return (

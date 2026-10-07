@@ -1,4 +1,6 @@
+import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import { Share, View } from "react-native";
 
 import { useAuth } from "@/auth";
@@ -35,6 +37,10 @@ function sharePost(post: PostDetailDTO, url: string) {
   const message = `${post.title} by ${post.artist.name} · ${site.name}`;
   // iOS shares the URL as its own item; Android only carries `message`.
   Share.share(ios ? { message, url } : { message: `${message}\n${url}` }).catch(() => {});
+}
+
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
 function PostSkeleton() {
@@ -81,12 +87,27 @@ function PostBody({ post }: { post: PostDetailDTO }) {
   const { user } = useAuth();
   const { isPostSaved, togglePost } = useSaves();
   const saved = isPostSaved(post.id);
-  const likeStatus = useLikeStatus(post.slug, Boolean(user));
+  const likeStatus = useLikeStatus(post.slug);
   const toggleLike = useToggleLike(post.slug);
-  const liked = likeStatus.data?.likedByMe === true;
+  const [likeError, setLikeError] = useState<string | null>(null);
+  const liked = user ? likeStatus.data?.likedByMe === true : false;
   const likeCount = likeStatus.data?.likeCount ?? post.likeCount;
   const webUrl = originUrl(`/post/${post.slug}`);
   const date = published(post.publishedAt);
+
+  const onLike = async () => {
+    if (!user) {
+      router.push("/join");
+      return;
+    }
+    setLikeError(null);
+    if (process.env.EXPO_OS === "ios") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await toggleLike.mutateAsync();
+    } catch (cause) {
+      setLikeError(isApiError(cause) ? cause.message : "Could not update that like.");
+    }
+  };
 
   return (
     <>
@@ -101,6 +122,10 @@ function PostBody({ post }: { post: PostDetailDTO }) {
           {post.title}
         </ThemedText>
         <ArtistByline artist={post.artist} />
+        <ThemedText variant="footnote" tone="muted">
+          {plural(likeCount, "like")}
+          {user ? "" : " · join to leave yours"}
+        </ThemedText>
       </View>
 
       <View style={{ flexDirection: "row", gap: spacing.xs }}>
@@ -110,13 +135,7 @@ function PostBody({ post }: { post: PostDetailDTO }) {
           variant="secondary"
           accessibilityLabel={liked ? "Remove like" : "Like this work"}
           loading={toggleLike.isPending}
-          onPress={() => {
-            if (!user) {
-              router.push("/join");
-              return;
-            }
-            void toggleLike.mutateAsync().catch(() => {});
-          }}
+          onPress={() => void onLike()}
           style={{ flex: 1 }}
         />
         <Button
@@ -135,6 +154,12 @@ function PostBody({ post }: { post: PostDetailDTO }) {
           style={{ flex: 1 }}
         />
       </View>
+
+      {likeError ? (
+        <ThemedText variant="callout" tone="danger" accessibilityLiveRegion="polite">
+          {likeError}
+        </ThemedText>
+      ) : null}
 
       {post.description ? (
         <ThemedText variant="body" selectable>
