@@ -8,9 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": ""
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
       }
     },
     "development-simulator": {
@@ -23,9 +21,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": ""
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
       }
     },
     "ios-simulator": {
@@ -44,17 +40,13 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": ""
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
       }
     }
   },
   "submit": {
     "production": {
-      "ios": {
-        "appleTeamId": "REPLACE_WITH_NONPROFIT_APPLE_TEAM_ID"
-      },
+      "ios": {},
       "android": {
         "serviceAccountKeyPath": "./secrets/play-service-account.json",
         "track": "internal"
