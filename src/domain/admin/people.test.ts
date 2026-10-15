@@ -112,6 +112,22 @@ describe("actionsFor: mirrors the server guards so the UI never offers a dead en
   });
 });
 
+describe("confirm labels", () => {
+  it("every action has a short confirm label that fits a half-width button", () => {
+    const everything = [
+      ...actionsFor(person({ id: "a", artistApproved: false }), VIEWER_ID),
+      ...actionsFor(person({ id: "b", artistApproved: true, role: "ARTIST" }), VIEWER_ID),
+      ...actionsFor(person({ id: "c", suspended: true }), VIEWER_ID),
+      ...actionsFor(person({ id: "d", role: "ADMIN" }), VIEWER_ID),
+    ];
+    expect(everything.length).toBeGreaterThan(8);
+    for (const option of everything) {
+      expect(option.confirmLabel.length).toBeGreaterThan(0);
+      expect(option.confirmLabel.length).toBeLessThanOrEqual(12);
+    }
+  });
+});
+
 describe("auditLabel", () => {
   it("translates audit actions to plain words", () => {
     expect(auditLabel("user.role_change")).toBe("Role changed");

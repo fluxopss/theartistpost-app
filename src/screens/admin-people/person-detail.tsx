@@ -375,7 +375,8 @@ function ActionPanel({
           <View style={{ flexDirection: "row", gap: spacing.xs }}>
             <Button title="Cancel" variant="secondary" onPress={reset} disabled={act.isPending} style={{ flex: 1 }} />
             <Button
-              title={chosen.label}
+              title={chosen.confirmLabel}
+              accessibilityLabel={chosen.label}
               variant={chosen.destructive ? "destructive" : "primary"}
               loading={act.isPending}
               disabled={act.isPending}

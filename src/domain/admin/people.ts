@@ -59,22 +59,27 @@ export type PersonActionId =
 export type PersonActionOption = {
   id: PersonActionId;
   label: string;
+  /** Short label for the confirm button, which shares a row with Cancel. */
+  confirmLabel: string;
   /** What the confirmation says will happen, in plain words. */
   consequence: string;
   destructive: boolean;
 };
 
-const ROLE_ACTION: Record<AdminRole, { label: string; consequence: string }> = {
+const ROLE_ACTION: Record<AdminRole, { label: string; confirmLabel: string; consequence: string }> = {
   VIEWER: {
     label: "Make a member",
+    confirmLabel: "Make member",
     consequence: "They lose artist and admin tools and become a regular member.",
   },
   ARTIST: {
     label: "Make an artist",
+    confirmLabel: "Make artist",
     consequence: "They get the artist role. Approval to publish is separate.",
   },
   ADMIN: {
     label: "Make an admin",
+    confirmLabel: "Make admin",
     consequence: "They can manage people, reports and artist requests.",
   },
 };
@@ -97,6 +102,7 @@ export function actionsFor(person: AdminPersonRowDTO, viewerId: string): PersonA
     options.push({
       id: "approve_artist",
       label: "Approve as artist",
+      confirmLabel: "Approve",
       consequence: "They can publish to The Wall.",
       destructive: false,
     });
@@ -104,6 +110,7 @@ export function actionsFor(person: AdminPersonRowDTO, viewerId: string): PersonA
     options.push({
       id: "revoke_artist",
       label: "Revoke artist approval",
+      confirmLabel: "Revoke",
       consequence: "They can no longer publish to The Wall until approved again.",
       destructive: true,
     });
@@ -117,6 +124,7 @@ export function actionsFor(person: AdminPersonRowDTO, viewerId: string): PersonA
       options.push({
         id: `role:${role}`,
         label: ROLE_ACTION[role].label,
+        confirmLabel: ROLE_ACTION[role].confirmLabel,
         consequence: ROLE_ACTION[role].consequence,
         destructive: person.role === "ADMIN" && role !== "ADMIN",
       });
@@ -127,6 +135,7 @@ export function actionsFor(person: AdminPersonRowDTO, viewerId: string): PersonA
     options.push({
       id: "unsuspend",
       label: "Lift suspension",
+      confirmLabel: "Lift",
       consequence: "They can post, comment and react again.",
       destructive: false,
     });
@@ -134,6 +143,7 @@ export function actionsFor(person: AdminPersonRowDTO, viewerId: string): PersonA
     options.push({
       id: "suspend",
       label: "Suspend",
+      confirmLabel: "Suspend",
       consequence: "They can still read, but can't post, comment or react.",
       destructive: true,
     });
@@ -142,6 +152,7 @@ export function actionsFor(person: AdminPersonRowDTO, viewerId: string): PersonA
   options.push({
     id: "sign_in_help",
     label: "Email a sign-in code",
+    confirmLabel: "Send code",
     consequence: "A one-time code goes to their email. You never see it.",
     destructive: false,
   });
