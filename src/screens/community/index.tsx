@@ -66,6 +66,12 @@ export function CommunityScreen() {
     [topics.data],
   );
 
+  // A cold start offline leaves the topic chips errored too; refresh and Try again must bring both back.
+  const refresh = () => {
+    void query.refetch();
+    if (topics.isError) void topics.refetch();
+  };
+
   const compose = () => {
     if (ensureMember()) router.push("/compose-community");
   };
@@ -97,7 +103,7 @@ export function CommunityScreen() {
     empty = (
       <ErrorState
         offline={isApiError(query.error) && query.error.offline}
-        onRetry={() => void query.refetch()}
+        onRetry={refresh}
         retrying={query.isRefetching}
       />
     );
@@ -130,7 +136,7 @@ export function CommunityScreen() {
         }}
         onEndReachedThreshold={0.6}
         refreshing={query.isRefetching && !query.isFetchingNextPage}
-        onRefresh={() => void query.refetch()}
+        onRefresh={refresh}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         style={{ backgroundColor: palette.bg }}

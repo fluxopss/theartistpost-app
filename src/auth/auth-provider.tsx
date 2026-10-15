@@ -4,11 +4,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
 import { isApiError } from "@/api/errors";
+import { queryClient } from "@/api/query-client";
+import { identityChanged } from "@/domain/auth/identity";
 
 import { authApi } from "./api";
 import { sessionStore } from "./session-store";
@@ -104,6 +107,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [canPublish, setCanPublish] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+
+  // Cached (and persisted) API data belongs to whoever was signed in: your profile,
+  // notifications, blocks, follow/support state. Drop it all when the account changes
+  // or signs out so the next person never sees it. Cold-start restores don't count.
+  const lastIdentity = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (status !== "ready") return;
+    const next = user?.id ?? null;
+    if (identityChanged(lastIdentity.current, next)) queryClient.clear();
+    lastIdentity.current = next;
+  }, [status, user?.id]);
 
   const hydrate = useCallback(async () => {
     const stored = await sessionStore.read();

@@ -1,5 +1,6 @@
 import { fetch } from "expo/fetch";
 import Constants from "expo-constants";
+import { File } from "expo-file-system";
 
 import { getAuthToken } from "@/auth/token";
 
@@ -88,11 +89,10 @@ export const api = {
   /** Image upload for the artist studio. Field name matches the web `/api/upload` contract. */
   upload: <T>(path: string, file: { uri: string; name: string; mimeType: string }) => {
     const formData = new FormData();
-    formData.append("file", {
-      uri: file.uri,
-      name: file.name,
-      type: file.mimeType,
-    } as unknown as Blob);
+    // `fetch` here is expo/fetch, which cannot read a React Native `{ uri, name, type }`
+    // part (it fails as a "network" error). An expo-file-system `File` carries its bytes,
+    // name and type, so it uploads correctly. (file.name / file.mimeType come from the picker.)
+    formData.append("file", new File(file.uri) as unknown as Blob);
     return request<T>(path, { method: "POST", formData });
   },
 };
