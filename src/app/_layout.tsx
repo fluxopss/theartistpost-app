@@ -75,6 +75,17 @@ export default function RootLayout() {
                 <Stack.Screen name="inquiry" options={{ presentation: "modal", headerShown: false }} />
                 <Stack.Screen name="activity" options={{ headerShown: true, title: "Activity" }} />
                 <Stack.Screen
+                  name="report"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.75, 1],
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
+                <Stack.Screen
                   name="note/[id]"
                   options={{
                     presentation: "formSheet",
