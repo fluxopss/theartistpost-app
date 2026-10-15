@@ -97,7 +97,7 @@ function parseArgs(argv) {
   return { command, flags, positional };
 }
 
-function checkTree({ requireMain }) {
+function checkTree({ requireMain, dryRun = false }) {
   step("Checking the working tree");
   const status = git(["status", "--porcelain"]);
   if (status.status !== 0) fail("This is not a git checkout.");
@@ -110,13 +110,19 @@ function checkTree({ requireMain }) {
 
   if (!requireMain) return { branch, head };
 
+  // A dry run reports these instead of stopping, so the rest can be rehearsed.
+  const refuse = (message) => {
+    if (dryRun) console.warn(`  ⚠ A real release would stop here: ${message}`);
+    else fail(message);
+  };
   if (branch !== "main") {
-    fail(`Production releases are cut from main, and this is "${branch}". Merge your PR first.`);
+    refuse(`Production releases are cut from main, and this is "${branch}". Merge your PR first.`);
+    return { branch, head };
   }
   git(["fetch", "origin", "main", "--quiet"]);
   const remote = git(["rev-parse", "origin/main"]).out;
   if (remote && remote !== head) {
-    fail("main is not the same commit as origin/main. Pull (or push) so you release exactly what is on GitHub.");
+    refuse("main is not the same commit as origin/main. Pull (or push) so you release exactly what is on GitHub.");
   }
   return { branch, head };
 }
@@ -156,13 +162,13 @@ function parseJson(text) {
 function releaseOta({ flags, positional }) {
   const message = positional.join(" ").trim();
   if (!message) {
-    fail('Say what changed: npm run release:ota -- "Fix the RSVP button on small phones"');
+    fail('Say what changed: node scripts/release.mjs ota "Fix the RSVP button on small phones"');
   }
   if (!CHANNELS.has(flags.channel)) {
     fail(`--channel must be production or preview, not "${flags.channel}".`);
   }
   const production = flags.channel === "production";
-  checkTree({ requireMain: production });
+  checkTree({ requireMain: production, dryRun: flags.dryRun });
   runGates({ enabled: flags.gates, dryRun: flags.dryRun });
 
   const args = [
@@ -203,7 +209,7 @@ function releaseOta({ flags, positional }) {
 }
 
 function releaseNative({ flags }) {
-  checkTree({ requireMain: true });
+  checkTree({ requireMain: true, dryRun: flags.dryRun });
   runGates({ enabled: flags.gates, dryRun: flags.dryRun });
 
   const ios = [
