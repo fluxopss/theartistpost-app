@@ -1,5 +1,37 @@
 /// <reference types="jest" />
-import { queryKeysToRefreshAfterProfileUpdate } from "./profile-sync";
+import { profileChangeFromServer, queryKeysToRefreshAfterProfileUpdate } from "./profile-sync";
+
+const base = {
+  name: "Vera",
+  handle: "vera",
+  chapterId: "fl-wpb" as string | null,
+  topics: [{ slug: "music" }, { slug: "film" }],
+};
+
+describe("profileChangeFromServer", () => {
+  it("is empty when nothing that other screens depend on changed", () => {
+    expect(profileChangeFromServer(base, { ...base })).toEqual({});
+  });
+
+  it("reports changed topics regardless of order", () => {
+    expect(profileChangeFromServer(base, { ...base, topics: [{ slug: "film" }, { slug: "music" }] })).toEqual({});
+    expect(profileChangeFromServer(base, { ...base, topics: [{ slug: "dance" }] })).toEqual({
+      topicSlugs: ["dance"],
+    });
+  });
+
+  it("reports a changed chapter, name or handle", () => {
+    expect(profileChangeFromServer(base, { ...base, chapterId: null })).toEqual({ chapterId: null });
+    expect(profileChangeFromServer(base, { ...base, name: "Vera V" })).toEqual({ name: "Vera V" });
+    expect(profileChangeFromServer(base, { ...base, handle: "vera2" })).toEqual({ handle: "vera2" });
+  });
+
+  it("a change made on another device refreshes the board and feeds through the same keys", () => {
+    const change = profileChangeFromServer(base, { ...base, topics: [{ slug: "dance" }] });
+    const keys = queryKeysToRefreshAfterProfileUpdate(change).map((key) => key[0]);
+    expect(keys).toEqual(expect.arrayContaining(["community", "feed", "people"]));
+  });
+});
 
 const has = (keys: readonly (readonly string[])[], key: string) => keys.some((k) => k[0] === key);
 

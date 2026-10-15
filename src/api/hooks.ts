@@ -8,7 +8,7 @@ import {
   type Reaction,
   type ReactionState,
 } from "@/domain/community/reactions";
-import { queryKeysToRefreshAfterProfileUpdate } from "@/domain/people/profile-sync";
+import { profileChangeFromServer, queryKeysToRefreshAfterProfileUpdate } from "@/domain/people/profile-sync";
 
 import { api } from "./client";
 import type {
@@ -164,9 +164,24 @@ export function useArtistTimeline(handle: string) {
 }
 
 export function useMe(enabled = true) {
+  const client = useQueryClient();
   return useQuery({
     queryKey: queryKeys.me,
-    queryFn: ({ signal }) => api.get<MeDTO>("/me", signal),
+    queryFn: async ({ signal }) => {
+      const previous = client.getQueryData<MeDTO>(queryKeys.me);
+      const next = await api.get<MeDTO>("/me", signal);
+      // An edit made on another device (topics, chapter, name, handle) changes what the
+      // board, feeds and suggestions should show, so refetch them like a local edit would.
+      if (previous) {
+        const change = profileChangeFromServer(previous.user, next.user);
+        if (Object.keys(change).length > 0) {
+          for (const queryKey of queryKeysToRefreshAfterProfileUpdate(change)) {
+            void client.invalidateQueries({ queryKey });
+          }
+        }
+      }
+      return next;
+    },
     enabled,
     retry: false,
     // The server is the source of truth: an edit made on another device shows
