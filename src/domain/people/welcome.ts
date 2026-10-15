@@ -1,4 +1,8 @@
-export type WelcomeStep = "guidelines" | "handle" | "topics" | "photo";
+/**
+ * Onboarding after join is three steps: Guidelines, profile (name, handle and
+ * an optional photo on one screen) and topics.
+ */
+export type WelcomeStep = "guidelines" | "profile" | "topics";
 
 /** The slice of `GET /me` that decides onboarding. */
 export type WelcomeProfile = {
@@ -12,10 +16,19 @@ export type WelcomeProfile = {
 export function welcomeSteps(profile: WelcomeProfile): WelcomeStep[] {
   const steps: WelcomeStep[] = [];
   if (!profile.termsAcceptedAt) steps.push("guidelines");
-  if (!profile.handle) steps.push("handle");
+  if (!profile.handle || !profile.image) steps.push("profile");
   if (profile.topics.length === 0) steps.push("topics");
-  if (!profile.image) steps.push("photo");
   return steps;
+}
+
+/** Where the member is in the flow, for the step label and progress bar. */
+export function welcomeProgress(
+  index: number,
+  total: number,
+): { current: number; total: number; fraction: number } {
+  const safeTotal = Math.max(1, total);
+  const current = Math.min(Math.max(0, index) + 1, safeTotal);
+  return { current, total: safeTotal, fraction: current / safeTotal };
 }
 
 /**

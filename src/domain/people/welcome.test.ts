@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { needsWelcome, welcomeSteps, type WelcomeProfile } from "./welcome";
+import { needsWelcome, welcomeProgress, welcomeSteps, type WelcomeProfile } from "./welcome";
 
 const complete: WelcomeProfile = {
   handle: "robbi",
@@ -9,27 +9,38 @@ const complete: WelcomeProfile = {
 };
 
 describe("welcomeSteps", () => {
-  it("needs every step for a brand-new member", () => {
+  it("is three steps for a brand-new member: Guidelines, profile (name, handle, photo), topics", () => {
     expect(welcomeSteps({ handle: null, termsAcceptedAt: null, topics: [], image: null })).toEqual([
       "guidelines",
-      "handle",
+      "profile",
       "topics",
-      "photo",
     ]);
   });
 
   it("skips what is already done", () => {
     expect(welcomeSteps(complete)).toEqual([]);
     expect(welcomeSteps({ ...complete, termsAcceptedAt: null })).toEqual(["guidelines"]);
-    expect(welcomeSteps({ ...complete, handle: null })).toEqual(["handle"]);
+    expect(welcomeSteps({ ...complete, handle: null })).toEqual(["profile"]);
     expect(welcomeSteps({ ...complete, topics: [] })).toEqual(["topics"]);
-    expect(welcomeSteps({ ...complete, image: null })).toEqual(["photo"]);
+    expect(welcomeSteps({ ...complete, image: null })).toEqual(["profile"]);
   });
 
-  it("does not ask an artist (who already has a handle) to pick one", () => {
+  it("still offers an artist (who already has a handle) the photo on the profile step", () => {
     expect(
       welcomeSteps({ handle: "realpainter", termsAcceptedAt: null, topics: [], image: null }),
-    ).toEqual(["guidelines", "topics", "photo"]);
+    ).toEqual(["guidelines", "profile", "topics"]);
+  });
+});
+
+describe("welcomeProgress", () => {
+  it("reports the step number and how much of the bar is filled", () => {
+    expect(welcomeProgress(0, 3)).toEqual({ current: 1, total: 3, fraction: 1 / 3 });
+    expect(welcomeProgress(2, 3)).toEqual({ current: 3, total: 3, fraction: 1 });
+  });
+
+  it("never reports an empty or overfull bar", () => {
+    expect(welcomeProgress(0, 0)).toEqual({ current: 1, total: 1, fraction: 1 });
+    expect(welcomeProgress(7, 3)).toEqual({ current: 3, total: 3, fraction: 1 });
   });
 });
 
