@@ -8,11 +8,11 @@ import { PersonRow } from "@/components/person-row";
 import { ThemedText } from "@/components/themed-text";
 import { spacing } from "@/theme";
 
-type Mode = "all" | "following" | "filtered" | "join";
+type Mode = "all" | "following" | "foryou" | "filtered" | "join";
 
 /** Honest empty states for the board; never filler posts. */
 export function EmptyBoard({ mode, onCompose }: { mode: Mode; onCompose: () => void }) {
-  const suggested = useSuggestedPeople(mode === "following");
+  const suggested = useSuggestedPeople(mode === "following" || mode === "foryou");
   const people = suggested.data?.items ?? [];
 
   if (mode === "join") {
@@ -23,6 +23,29 @@ export function EmptyBoard({ mode, onCompose }: { mode: Mode; onCompose: () => v
         body="Sign in to see posts from the people you follow."
         action={<Button title="Join the house" onPress={() => router.push("/join")} />}
       />
+    );
+  }
+
+  if (mode === "foryou") {
+    return (
+      <View style={{ gap: spacing.md }}>
+        <EmptyState
+          icon="sparkle"
+          title="Nothing on your topics yet"
+          body="Posts on the topics you picked land here. Follow a few people to hear from them too."
+          action={<Button title="Post to the board" tone="coral" onPress={onCompose} />}
+        />
+        {people.length > 0 ? (
+          <View style={{ gap: spacing.xs }}>
+            <ThemedText variant="subheadline" accessibilityRole="header">
+              People you may like
+            </ThemedText>
+            {people.map((person) => (
+              <PersonRow key={person.id} person={person} />
+            ))}
+          </View>
+        ) : null}
+      </View>
     );
   }
 

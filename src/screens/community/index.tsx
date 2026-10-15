@@ -10,7 +10,10 @@ import { ActivityBell } from "@/components/activity-bell";
 import { CommunityCard } from "@/components/community-card";
 import { ErrorState } from "@/components/error-state";
 import { FilterChips } from "@/components/filter-chips";
+import { Button } from "@/components/button";
 import { Skeleton } from "@/components/skeleton";
+import { ThemedText } from "@/components/themed-text";
+import { defaultBoardScope, needsTopicsPrompt, type BoardScope } from "@/domain/community/board-scope";
 import { COMMUNITY_KINDS } from "@/domain/community/compose";
 import { useCommunityGate } from "@/hooks/use-community-gate";
 import { screenMargin, spacing, useBrandColors } from "@/theme";
@@ -19,12 +22,15 @@ import { ComposerPrompt } from "./composer-prompt";
 import { EmptyBoard } from "./empty-board";
 import { KindnessCard } from "./kindness-card";
 
-type Scope = "all" | "following";
+type Scope = BoardScope;
 
-const scopeOptions: { id: Scope; label: string }[] = [
+const guestScopes: { id: Scope; label: string }[] = [
   { id: "all", label: "Everyone" },
   { id: "following", label: "Following" },
 ];
+
+/** For You comes first for signed-in members: it is ranked by the topics they picked. */
+const memberScopes: { id: Scope; label: string }[] = [{ id: "foryou", label: "For You" }, ...guestScopes];
 
 const ios = process.env.EXPO_OS === "ios";
 
@@ -35,13 +41,16 @@ const ios = process.env.EXPO_OS === "ios";
  */
 export function CommunityScreen() {
   const palette = useBrandColors();
-  const { signedIn, ensureMember } = useCommunityGate();
-  const [scope, setScope] = useState<Scope>("all");
+  const { signedIn, ensureMember, profile } = useCommunityGate();
+  const topicCount = profile?.topics.length ?? 0;
+  // Until they choose, members with topics start on For You, everyone else on the whole board.
+  const [chosenScope, setScope] = useState<Scope | null>(null);
+  const scope: Scope = chosenScope ?? defaultBoardScope({ signedIn, topicCount });
   const [kind, setKind] = useState<CommunityKind | "all">("all");
   const [topic, setTopic] = useState("all");
   const topics = useTopics();
 
-  const followingLocked = scope === "following" && !signedIn;
+  const followingLocked = (scope === "following" || scope === "foryou") && !signedIn;
   const query = useCommunity(
     {
       scope,
@@ -79,7 +88,20 @@ export function CommunityScreen() {
   const header = (
     <View style={{ gap: spacing.md, paddingBottom: spacing.sm }}>
       <ComposerPrompt onPress={compose} />
-      <FilterChips label="Whose posts" options={scopeOptions} value={scope} onChange={setScope} />
+      <FilterChips
+        label="Whose posts"
+        options={signedIn ? memberScopes : guestScopes}
+        value={scope}
+        onChange={setScope}
+      />
+      {needsTopicsPrompt({ scope, signedIn, topicCount }) ? (
+        <View style={{ gap: spacing.xs }}>
+          <ThemedText variant="callout" tone="muted">
+            Pick what you make or love and For You fills with it.
+          </ThemedText>
+          <Button title="Pick your topics" variant="secondary" onPress={() => router.push("/edit-profile")} />
+        </View>
+      ) : null}
       <FilterChips label="Kind of post" options={kindOptions} value={kind} onChange={setKind} />
       {topicOptions.length > 1 ? (
         <FilterChips label="Topic" options={topicOptions} value={topic} onChange={setTopic} />
@@ -108,7 +130,12 @@ export function CommunityScreen() {
       />
     );
   } else {
-    empty = <EmptyBoard mode={scope === "following" ? "following" : filtered ? "filtered" : "all"} onCompose={compose} />;
+    empty = (
+      <EmptyBoard
+        mode={scope === "following" ? "following" : filtered ? "filtered" : scope === "foryou" ? "foryou" : "all"}
+        onCompose={compose}
+      />
+    );
   }
 
   return (

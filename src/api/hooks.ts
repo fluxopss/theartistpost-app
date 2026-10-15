@@ -8,6 +8,7 @@ import {
   type Reaction,
   type ReactionState,
 } from "@/domain/community/reactions";
+import { queryKeysToRefreshAfterProfileUpdate } from "@/domain/people/profile-sync";
 
 import { api } from "./client";
 import type {
@@ -168,6 +169,9 @@ export function useMe(enabled = true) {
     queryFn: ({ signal }) => api.get<MeDTO>("/me", signal),
     enabled,
     retry: false,
+    // The server is the source of truth: an edit made on another device shows
+    // up the next time this phone comes to the foreground after 30 seconds.
+    staleTime: 30 * 1000,
   });
 }
 
@@ -354,10 +358,13 @@ export function useUpdateProfile() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: ProfileUpdateInput) => api.patch<MeDTO>("/me", input),
-    onSuccess: (data) => {
+    onSuccess: (data, input) => {
+      // The server's answer is the source of truth for your own profile.
       client.setQueryData(queryKeys.me, data);
-      void client.invalidateQueries({ queryKey: ["person"] });
-      void client.invalidateQueries({ queryKey: ["people"] });
+      // Everything that is derived from it (For You, suggestions, author names) refetches.
+      for (const queryKey of queryKeysToRefreshAfterProfileUpdate(input)) {
+        void client.invalidateQueries({ queryKey });
+      }
     },
   });
 }
@@ -371,6 +378,9 @@ export function useUploadAvatar() {
       patchMeUser(client, (user) => ({ ...user, image: avatarUrl }));
       void client.invalidateQueries({ queryKey: ["person"] });
       void client.invalidateQueries({ queryKey: ["people"] });
+      // Your face is on every post and notification you appear in.
+      void client.invalidateQueries({ queryKey: ["community"] });
+      void client.invalidateQueries({ queryKey: queryKeys.me });
     },
   });
 }
@@ -544,7 +554,8 @@ export function useFollowingFeed() {
 }
 
 export type CommunityParams = {
-  scope: "all" | "following";
+  /** `foryou` is ranked server-side by the signed-in member's topics. */
+  scope: "all" | "following" | "foryou";
   topic?: string;
   kind?: CommunityKind;
 };
