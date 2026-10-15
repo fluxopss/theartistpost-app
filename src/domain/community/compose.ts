@@ -1,4 +1,5 @@
 import type { CommunityKind } from "@/api/types";
+import { graphemeCount } from "@/domain/text/graphemes";
 
 export type CommunityKindOption = {
   id: CommunityKind;
@@ -61,11 +62,11 @@ export function extractMentions(body: string): string[] {
 
 export type CommunityBodyValidation = { ok: true; body: string } | { ok: false; message: string };
 
-/** Composer gate: 1 to 500 characters after trimming (same limits as the server). */
+/** Composer gate: 1 to 500 characters after trimming, counted by what a person sees (emoji = 1). */
 export function validateCommunityBody(raw: string): CommunityBodyValidation {
   const body = raw.trim();
   if (body.length === 0) return { ok: false, message: "Write something first." };
-  if (body.length > COMMUNITY_BODY_MAX) {
+  if (graphemeCount(body) > COMMUNITY_BODY_MAX) {
     return { ok: false, message: `Keep it under ${COMMUNITY_BODY_MAX} characters.` };
   }
   return { ok: true, body };
