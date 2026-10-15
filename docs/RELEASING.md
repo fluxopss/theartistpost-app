@@ -67,6 +67,8 @@ What it does, in order:
 3. Runs `eas update --channel production --environment production --message "…"`.
 4. Prints the **update group id** and the exact rollback command.
 
+Production releases pin `EXPO_PUBLIC_API_URL` to `https://theartistpost.fluxlab.agency`, so a stray local `.env` or shell variable cannot point a release at a test server.
+
 Practice first with `node scripts/release.mjs ota "msg" --dry-run`: it runs every check and prints the publish command without running it. Add `--no-gates` (dry run only) for a fast plumbing check.
 
 To try a change on the **preview** channel instead (any branch, no `main` requirement — this is how Android APK testers get updates, see §6):

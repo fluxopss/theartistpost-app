@@ -33,6 +33,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const isWindows = process.platform === "win32";
 const EAS = ["eas-cli@latest"];
+const PROD_API = "https://theartistpost.fluxlab.agency";
 
 const GATES = [
   { name: "Typecheck", cmd: "npx", args: ["tsc", "--noEmit"] },
@@ -62,16 +63,17 @@ function quote(arg) {
 
 /**
  * Run a command in the repo. `capture` returns stdout (stderr stays on the
- * terminal so progress is visible). Returns { status, stdout }.
+ * terminal so progress is visible). `env` adds variables for this child only.
+ * Returns { status, stdout }.
  */
-function run(cmd, args, { capture = false } = {}) {
+function run(cmd, args, { capture = false, env = {} } = {}) {
   const line = [cmd, ...args].map(quote).join(" ");
   const result = spawnSync(line, {
     cwd: root,
     shell: true,
     stdio: capture ? ["inherit", "pipe", "inherit"] : "inherit",
     encoding: "utf8",
-    env: { ...process.env, CI: process.env.CI ?? "1" },
+    env: { ...process.env, CI: process.env.CI ?? "1", ...env },
   });
   return { status: result.status ?? 1, stdout: result.stdout ?? "" };
 }
@@ -171,6 +173,12 @@ function releaseOta({ flags, positional }) {
   checkTree({ requireMain: production, dryRun: flags.dryRun });
   runGates({ enabled: flags.gates, dryRun: flags.dryRun });
 
+  // Production always bundles against the live API. Preview keeps the shell/.env value.
+  const env = production ? { EXPO_PUBLIC_API_URL: PROD_API } : {};
+  console.log(
+    `  API: ${production ? PROD_API : process.env.EXPO_PUBLIC_API_URL ?? "(not set here; .env or app config decides)"}`,
+  );
+
   const args = [
     ...EAS,
     "update",
@@ -192,7 +200,7 @@ function releaseOta({ flags, positional }) {
   }
 
   step(`Publishing OTA update to the ${flags.channel} channel`);
-  const { status, stdout } = run("npx", args, { capture: true });
+  const { status, stdout } = run("npx", args, { capture: true, env });
   if (status !== 0) fail("eas update failed. Nothing reached testers.");
   const parsed = parseJson(stdout);
   const updates = Array.isArray(parsed) ? parsed : parsed ? [parsed] : [];
@@ -236,6 +244,8 @@ function releaseNative({ flags }) {
     "--json",
   ];
 
+  console.log(`  API: ${PROD_API} (iOS production build; the Android preview APK is unchanged)`);
+
   if (flags.dryRun) {
     step("Dry run: would start");
     console.log(`  npx ${ios.map(quote).join(" ")}`);
@@ -245,12 +255,12 @@ function releaseNative({ flags }) {
   }
 
   const started = [];
-  for (const [label, args] of [
-    ["iOS production build (auto-submits to TestFlight)", ios],
-    ["Android preview build (installable APK)", android],
+  for (const [label, args, env] of [
+    ["iOS production build (auto-submits to TestFlight)", ios, { EXPO_PUBLIC_API_URL: PROD_API }],
+    ["Android preview build (installable APK)", android, {}],
   ]) {
     step(`Starting ${label}`);
-    const { status, stdout } = run("npx", args, { capture: true });
+    const { status, stdout } = run("npx", args, { capture: true, env });
     if (status !== 0) {
       console.error(`✖ ${label} did not start.`);
       started.push({ label, id: null, url: null });
