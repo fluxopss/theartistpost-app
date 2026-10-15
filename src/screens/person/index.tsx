@@ -127,7 +127,8 @@ export function PersonScreen() {
   const { handle } = useLocalSearchParams<{ handle: string }>();
   const query = usePerson(handle ?? "");
   const gone = isApiError(query.error) && query.error.code === "not_found";
-  const person = query.data;
+  // After a block the server answers 404 but the query keeps its old data; do not show it.
+  const person = gone ? undefined : query.data;
 
   return (
     <>

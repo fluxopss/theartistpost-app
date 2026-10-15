@@ -5,13 +5,13 @@ import { useAuth } from "@/auth";
 import { useMe } from "@/api/hooks";
 import { Icon } from "@/components/icon";
 import { ThemedText } from "@/components/themed-text";
-import { minTapTarget, radius, spacing, useBrandColors } from "@/theme";
+import { minTapTarget, radius, spacing, stageText, useBrandColors } from "@/theme";
 
 /**
  * Header bell for the Activity screen, with an unread count. Renders nothing
  * when no one is signed in.
  */
-export function ActivityBell() {
+export function ActivityBell({ onStage = false }: { onStage?: boolean }) {
   const { user } = useAuth();
   const me = useMe(Boolean(user));
   const palette = useBrandColors();
@@ -34,7 +34,7 @@ export function ActivityBell() {
         justifyContent: "center",
       }}
     >
-      <Icon name="bell" size={24} color={palette.text} />
+      <Icon name="bell" size={24} color={onStage ? stageText : palette.text} />
       {unread > 0 ? (
         <View
           importantForAccessibility="no"
