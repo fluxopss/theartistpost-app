@@ -18,6 +18,8 @@ export function notificationSentence(n: NotificationDTO): string {
       return preview ? `${name} liked ${preview}` : `${name} liked a work.`;
     case "COMMENT":
       return preview ? `${name} commented: “${preview}”` : `${name} left a Wall note.`;
+    case "EVENT":
+      return preview ?? "A night you answered for changed.";
     default:
       return `${name} sent you something new.`;
   }
