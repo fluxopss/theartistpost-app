@@ -7,6 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
+import { ModalBar } from "@/components/modal-bar";
 import { KindnessNoteCard } from "@/components/kindness-note-card";
 import { ListGroup } from "@/components/list-row";
 import { TextField } from "@/components/text-field";
@@ -26,7 +27,6 @@ import { duration, radius, screenMargin, spacing, spark, useBrandColors } from "
 import { tabRoutes } from "@/utils/links";
 
 import { ChoiceRow } from "./choice-row";
-import { ModalBar } from "./modal-bar";
 
 type Step = 1 | 2 | 3;
 

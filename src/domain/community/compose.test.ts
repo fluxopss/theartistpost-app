@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { COMMUNITY_BODY_MAX, COMMUNITY_KINDS, extractMentions } from "./compose";
+import { COMMUNITY_BODY_MAX, COMMUNITY_KINDS, extractMentions, validateCommunityBody } from "./compose";
 
 describe("community kinds", () => {
   it("lists the six v1 kinds with their labels in order", () => {
@@ -56,5 +56,21 @@ describe("extractMentions", () => {
 
   it("returns an empty list for a body without mentions", () => {
     expect(extractMentions("just a kind word")).toEqual([]);
+  });
+});
+
+describe("validateCommunityBody", () => {
+  it("requires something after trimming", () => {
+    expect(validateCommunityBody("   ")).toEqual({ ok: false, message: "Write something first." });
+    expect(validateCommunityBody("")).toMatchObject({ ok: false });
+  });
+
+  it("accepts up to 500 characters and trims", () => {
+    expect(validateCommunityBody("  hi  ")).toEqual({ ok: true, body: "hi" });
+    expect(validateCommunityBody("x".repeat(COMMUNITY_BODY_MAX))).toMatchObject({ ok: true });
+  });
+
+  it("rejects more than 500 characters", () => {
+    expect(validateCommunityBody("x".repeat(COMMUNITY_BODY_MAX + 1))).toMatchObject({ ok: false });
   });
 });

@@ -72,6 +72,30 @@ export default function RootLayout() {
                     headerShown: false,
                   }}
                 />
+                <Stack.Screen
+                  name="compose-community"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.9, 1],
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="edit-profile"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.9, 1],
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="welcome"
+                  options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
+                />
                 <Stack.Screen name="inquiry" options={{ presentation: "modal", headerShown: false }} />
                 <Stack.Screen name="activity" options={{ headerShown: true, title: "Activity" }} />
                 <Stack.Screen

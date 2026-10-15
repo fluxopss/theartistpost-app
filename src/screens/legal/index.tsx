@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 
+import { LegalSectionBlock } from "@/components/legal-section-block";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { ThemedText } from "@/components/themed-text";
 import { isLegalDocId, legalDocs } from "@/content/legal";
@@ -8,7 +9,6 @@ import { spacing } from "@/theme";
 
 import { LegalContactGroup } from "./legal-contact-group";
 import { LegalNotFound } from "./legal-not-found";
-import { LegalSectionBlock } from "./legal-section-block";
 
 /** Privacy, Terms or Support — the web pages' text, set for reading. */
 export function LegalScreen() {

@@ -521,10 +521,12 @@ export type CommunityParams = {
   kind?: CommunityKind;
 };
 
-export function useCommunity(params: CommunityParams) {
+/** `enabled` lets the Following scope stay idle for signed-out visitors. */
+export function useCommunity(params: CommunityParams, enabled = true) {
   return useInfiniteQuery({
     queryKey: queryKeys.communityList(params.scope, params.topic, params.kind),
     initialPageParam: null as string | null,
+    enabled,
     queryFn: ({ pageParam, signal }) => {
       const search = new URLSearchParams({ scope: params.scope, take: "20" });
       if (params.topic) search.set("topic", params.topic);

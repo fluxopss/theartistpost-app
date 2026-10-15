@@ -39,7 +39,7 @@ export type PostSummaryDTO = {
 export type CommentDTO = {
   id: string;
   body: string;
-  author: { name: string; handle?: string | null };
+  author: { name: string; handle?: string | null; avatarUrl?: string | null };
   createdAt: string;
 };
 
