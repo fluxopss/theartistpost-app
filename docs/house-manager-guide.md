@@ -42,10 +42,11 @@ Members report posts, Wall notes, community posts, and people with the `⋯` men
 Only **open** reports appear there. Each card shows what was reported, the reason, how many people reported it, a preview, and any note the reporter wrote.
 
 1. Open the card and read the preview. Open the item itself if you need more context.
-2. Pick one action:
-   - **Hide**: the item disappears for everyone else right away. Its reports close. Use it for content that breaks the Community Guidelines. Profile reports can't be hidden. Use **Suspend** for those.
-   - **Dismiss**: nothing new is removed and the reports close. If the house had hidden a community post or a Wall note automatically, Dismiss brings it back.
-   - **Suspend**: the person can't post, comment, or like anymore. They can still sign in, read, and delete their own account. Suspend also hides the reported item and closes its reports.
+2. Pick one action. The buttons on the card depend on what was reported:
+   - **Hide** (Wall works, Wall notes, and community posts only): the item disappears for everyone else right away. Its reports close. Use it for content that breaks the Community Guidelines.
+   - **Dismiss** (every report): nothing new is removed and the reports close. If the house had hidden a community post or a Wall note automatically, Dismiss brings it back.
+   - **Suspend** (every report): the person can't post, comment, or like anymore. They can still sign in, read, and delete their own account. Suspend also hides the reported item and closes its reports.
+   - **Profile reports** have no Hide button. For a profile, choose **Suspend** or **Dismiss**.
 3. Confirm the action. Once it's done, the card leaves the queue.
 
 **Auto-hide:** when three different people report the same item, it is hidden automatically. A Wall work is archived instead. Auto-hide doesn't close the reports, so they stay in the queue until you decide.
