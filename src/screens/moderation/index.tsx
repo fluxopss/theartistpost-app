@@ -12,6 +12,7 @@ import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { reportReasonLabel } from "@/domain/safety/reasons";
+import { moderationActionsFor } from "@/domain/admin/moderation-actions";
 import { radius, spacing, useBrandColors } from "@/theme";
 
 const TARGET_LABEL: Record<ReportTargetType, string> = {
@@ -19,6 +20,18 @@ const TARGET_LABEL: Record<ReportTargetType, string> = {
   COMMENT: "Wall note",
   COMMUNITY_POST: "Community post",
   USER: "Person",
+};
+
+const BUTTON_LABEL: Record<ReportAction, string> = {
+  hide: "Hide",
+  dismiss: "Dismiss",
+  suspend_user: "Suspend",
+};
+
+const BUTTON_VARIANT: Record<ReportAction, "secondary" | "ghost" | "destructive"> = {
+  hide: "secondary",
+  dismiss: "ghost",
+  suspend_user: "destructive",
 };
 
 const CONFIRM: Record<ReportAction, { title: string; body: string; button: string }> = {
@@ -170,28 +183,17 @@ function ReportCard({
         </ThemedText>
       ) : null}
       <View style={{ flexDirection: "row", gap: spacing.xs, flexWrap: "wrap" }}>
-        <Button
-          title="Hide"
-          variant="secondary"
-          disabled={busy}
-          accessibilityLabel={`Hide ${TARGET_LABEL[report.targetType].toLowerCase()}`}
-          onPress={() => onAction("hide")}
-          style={{ flexGrow: 1 }}
-        />
-        <Button
-          title="Dismiss"
-          variant="ghost"
-          disabled={busy}
-          onPress={() => onAction("dismiss")}
-          style={{ flexGrow: 1 }}
-        />
-        <Button
-          title="Suspend"
-          variant="destructive"
-          disabled={busy}
-          onPress={() => onAction("suspend_user")}
-          style={{ flexGrow: 1 }}
-        />
+        {moderationActionsFor(report.targetType).map((action) => (
+          <Button
+            key={action}
+            title={BUTTON_LABEL[action]}
+            variant={BUTTON_VARIANT[action]}
+            disabled={busy}
+            accessibilityLabel={`${BUTTON_LABEL[action]} ${TARGET_LABEL[report.targetType].toLowerCase()}`}
+            onPress={() => onAction(action)}
+            style={{ flexGrow: 1 }}
+          />
+        ))}
       </View>
     </View>
   );

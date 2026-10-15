@@ -271,3 +271,31 @@ export type ReportAction = "hide" | "dismiss" | "suspend_user";
 
 /** Local file part for multipart uploads (appended under field `file`). */
 export type UploadFile = { uri: string; name: string; type: string };
+
+/* ---------- Admin: artist requests ---------- */
+
+/** One row from GET /api/v1/admin/users. `artistApproved` is null for members with no artist profile. */
+export type AdminUserRowDTO = {
+  id: string;
+  name: string;
+  email: string;
+  role: "VIEWER" | "ARTIST" | "ADMIN";
+  handle: string | null;
+  artistApproved: boolean | null;
+  deniedSeed: boolean;
+  createdAt: string;
+};
+
+/** Full record returned by PATCH /api/v1/admin/users/[id]. */
+export type AdminUserDTO = AdminUserRowDTO & {
+  artistBio: string | null;
+  postCount: number;
+  commentCount: number;
+  likeCount: number;
+  updatedAt: string;
+};
+
+export type AdminUserUpdateInput = {
+  role?: "VIEWER" | "ARTIST" | "ADMIN";
+  artistApproved?: boolean;
+};

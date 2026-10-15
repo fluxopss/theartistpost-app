@@ -40,14 +40,6 @@ export function SettingsScreen() {
                 }
                 showChevron={false}
               />
-              {isAdmin ? (
-                <ListRow
-                  icon="flag"
-                  title="Moderation"
-                  subtitle="Open reports from the community"
-                  onPress={() => router.push("/moderation")}
-                />
-              ) : null}
               <ListRow
                 icon="close"
                 title="Sign out"
@@ -66,6 +58,23 @@ export function SettingsScreen() {
             />
           )}
         </ListGroup>
+        {isAdmin ? (
+          <ListGroup header="Manage the house" footer="Only house admins see this group.">
+            <ListRow
+              icon="studio"
+              title="Artist requests"
+              subtitle="Approve artists who want to publish to The Wall"
+              onPress={() => router.push("/artist-requests")}
+            />
+            <ListRow
+              icon="flag"
+              title="Moderation"
+              subtitle="Open reports from the community"
+              onPress={() => router.push("/moderation")}
+              separator={false}
+            />
+          </ListGroup>
+        ) : null}
         <AccountProfileGroup />
         <BlockedGroup />
         <StudioFields />
