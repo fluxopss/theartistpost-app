@@ -96,3 +96,13 @@ export function reactionAccessibilityLabel(state: ReactionState): string {
   }
   return "React. Be the first to cheer this on. Touch and hold to choose a reaction";
 }
+
+/** Spoken summary of a post's reactions, e.g. "3 reactions: 2 Love, 1 Fire". */
+export function reactionSummaryLabel(counts: ReactionCounts): string {
+  const total = totalReactions(counts);
+  if (total === 0) return "";
+  const parts = topReactions(counts, REACTIONS.length).map(
+    (entry) => `${entry.count} ${REACTION_LABEL[entry.reaction]}`,
+  );
+  return `${total} ${total === 1 ? "reaction" : "reactions"}: ${parts.join(", ")}`;
+}

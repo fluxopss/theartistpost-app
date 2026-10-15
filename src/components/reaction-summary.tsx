@@ -1,12 +1,7 @@
 import { Pressable, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import {
-  REACTION_LABEL,
-  topReactions,
-  totalReactions,
-  type ReactionCounts,
-} from "@/domain/community/reactions";
+import { reactionSummaryLabel, topReactions, type ReactionCounts } from "@/domain/community/reactions";
 import { minTapTarget, spacing } from "@/theme";
 
 /**
@@ -23,8 +18,7 @@ export function ReactionSummary({
 }) {
   const top = topReactions(counts, 3);
   if (top.length === 0) return null;
-  const total = totalReactions(counts);
-  const spoken = top.map((entry) => `${entry.count} ${REACTION_LABEL[entry.reaction]}`).join(", ");
+  const spoken = reactionSummaryLabel(counts);
 
   const body = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xs }}>
@@ -38,7 +32,7 @@ export function ReactionSummary({
 
   if (!onPress) {
     return (
-      <View accessible accessibilityLabel={`${total} reactions: ${spoken}`}>
+      <View accessible accessibilityLabel={spoken}>
         {body}
       </View>
     );
@@ -47,7 +41,7 @@ export function ReactionSummary({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${total} ${total === 1 ? "reaction" : "reactions"}: ${spoken}`}
+      accessibilityLabel={spoken}
       accessibilityHint="Shows who reacted"
       hitSlop={spacing.xxs}
       onPress={onPress}

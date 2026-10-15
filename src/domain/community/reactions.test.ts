@@ -5,6 +5,7 @@ import {
   applyViewerReaction,
   emptyReactionCounts,
   reactionAccessibilityLabel,
+  reactionSummaryLabel,
   reactionsFromLegacy,
   topReactions,
   totalReactions,
@@ -95,5 +96,18 @@ describe("accessibility", () => {
     expect(
       reactionAccessibilityLabel({ viewerReaction: null, reactionCounts: emptyReactionCounts() }),
     ).toBe("React. Be the first to cheer this on. Touch and hold to choose a reaction");
+  });
+});
+
+describe("reactionSummaryLabel", () => {
+  it("pluralises correctly and lists each emoji by name", () => {
+    expect(reactionSummaryLabel({ ...emptyReactionCounts(), INSPIRED: 1 })).toBe("1 reaction: 1 Inspired");
+    expect(reactionSummaryLabel({ ...emptyReactionCounts(), LOVE: 2, FIRE: 1 })).toBe(
+      "3 reactions: 2 Love, 1 Fire",
+    );
+  });
+
+  it("is empty when there are no reactions", () => {
+    expect(reactionSummaryLabel(emptyReactionCounts())).toBe("");
   });
 });

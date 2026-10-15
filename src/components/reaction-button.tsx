@@ -11,7 +11,6 @@ import {
   REACTION_EMOJI,
   REACTION_LABEL,
   reactionAccessibilityLabel,
-  totalReactions,
   type Reaction,
   type ReactionState,
 } from "@/domain/community/reactions";
@@ -58,7 +57,6 @@ export function ReactionButton({
   const ref = useRef<View>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const mine = state.viewerReaction;
-  const total = totalReactions(state.reactionCounts);
 
   const choose = (next: Reaction | null) => {
     setAnchor(null);
@@ -119,7 +117,6 @@ export function ReactionButton({
           style={{ fontVariant: ["tabular-nums"] }}
         >
           {mine ? REACTION_LABEL[mine] : "React"}
-          {total > 0 ? ` · ${total}` : ""}
         </ThemedText>
       </Pressable>
 
