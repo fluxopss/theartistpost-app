@@ -73,6 +73,7 @@ export default function RootLayout() {
                   }}
                 />
                 <Stack.Screen name="inquiry" options={{ presentation: "modal", headerShown: false }} />
+                <Stack.Screen name="activity" options={{ headerShown: true, title: "Activity" }} />
                 <Stack.Screen
                   name="note/[id]"
                   options={{
