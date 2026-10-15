@@ -120,6 +120,8 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
                 <Stack.Screen name="artist-requests" options={{ headerShown: true, title: "Artist requests" }} />
+                <Stack.Screen name="manage-people" options={{ headerShown: true, title: "People" }} />
+                <Stack.Screen name="manage-person/[id]" options={{ headerShown: true, title: "Member" }} />
                 <Stack.Screen
                   name="note/[id]"
                   options={{

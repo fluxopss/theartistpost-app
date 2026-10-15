@@ -61,6 +61,12 @@ export function SettingsScreen() {
         {isAdmin ? (
           <ListGroup header="Manage the house" footer="Only house admins see this group.">
             <ListRow
+              icon="people"
+              title="People"
+              subtitle="Find a member, see their history, manage their access"
+              onPress={() => router.push("/manage-people")}
+            />
+            <ListRow
               icon="studio"
               title="Artist requests"
               subtitle="Approve artists who want to publish to The Wall"
