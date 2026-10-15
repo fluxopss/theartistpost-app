@@ -16,7 +16,7 @@ type Envelope<T> =
   | { ok: false; error: { code: ApiErrorCode; message: string; fields?: Record<string, string>; retryAfterSec?: number } };
 
 type RequestInitShape = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   signal?: AbortSignal;
   /** Skip Authorization even if a token is in memory (unused — reserved). */
@@ -84,6 +84,7 @@ async function request<T>(path: string, init: RequestInitShape = {}): Promise<T>
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => request<T>(path, { signal }),
   post: <T>(path: string, body: unknown) => request<T>(path, { method: "POST", body }),
+  put: <T>(path: string, body: unknown) => request<T>(path, { method: "PUT", body }),
   patch: <T>(path: string, body: unknown) => request<T>(path, { method: "PATCH", body }),
   delete: <T>(path: string, body?: unknown) => request<T>(path, { method: "DELETE", body }),
   /** Image upload for the artist studio. Field name matches the web `/api/upload` contract. */

@@ -1,6 +1,14 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import {
+  applyViewerReaction,
+  emptyReactionCounts,
+  reactionsFromLegacy,
+  type Reaction,
+  type ReactionState,
+} from "@/domain/community/reactions";
+
 import { api } from "./client";
 import type {
   ArtistDTO,
@@ -12,6 +20,8 @@ import type {
   InvolveInput,
   LikeStateDTO,
   LikeStatusDTO,
+  ReactionResultDTO,
+  ReactorDTO,
   MeDTO,
   CommentDTO,
   PostDetailDTO,
@@ -176,23 +186,35 @@ export function useLikeStatus(slug: string, enabled = true) {
   });
 }
 
-export function useToggleLike(slug: string) {
+/**
+ * Set (or, with null, take back) the viewer's reaction on a Wall post. A
+ * plain Like is the heart (LOVE). Optimistic with rollback.
+ */
+export function useSetWallReaction(slug: string) {
   const client = useQueryClient();
+  const path = `/posts/${encodeURIComponent(slug)}/reaction`;
   return useMutation({
-    mutationFn: () => api.post<LikeStateDTO>(`/posts/${encodeURIComponent(slug)}/like`, {}),
-    onMutate: async () => {
+    mutationFn: (reaction: Reaction | null) =>
+      reaction ? api.put<LikeStateDTO>(path, { reaction }) : api.delete<LikeStateDTO>(path),
+    onMutate: async (reaction) => {
       await client.cancelQueries({ queryKey: queryKeys.like(slug) });
       const previousLike = client.getQueryData<LikeStatusDTO>(queryKeys.like(slug));
       const previousPost = client.getQueryData<PostDetailDTO>(queryKeys.post(slug));
-      const wasLiked = previousLike?.likedByMe === true;
-      const baseCount = previousLike?.likeCount ?? previousPost?.likeCount ?? 0;
-      const nextCount = Math.max(0, baseCount + (wasLiked ? -1 : 1));
+      const current: ReactionState = {
+        viewerReaction: previousLike?.viewerReaction ?? (previousLike?.likedByMe ? "LOVE" : null),
+        reactionCounts:
+          previousLike?.reactionCounts ??
+          { ...emptyReactionCounts(), LOVE: previousLike?.likeCount ?? previousPost?.likeCount ?? 0 },
+      };
+      const next = applyViewerReaction(current, reaction);
       client.setQueryData<LikeStatusDTO>(queryKeys.like(slug), {
-        likedByMe: !wasLiked,
-        likeCount: nextCount,
+        likedByMe: next.viewerSupported,
+        likeCount: next.supportCount,
+        viewerReaction: next.viewerReaction,
+        reactionCounts: next.reactionCounts,
       });
       client.setQueryData<PostDetailDTO>(queryKeys.post(slug), (prev) =>
-        prev ? { ...prev, likeCount: nextCount } : prev,
+        prev ? { ...prev, likeCount: next.supportCount } : prev,
       );
       return { previousLike, previousPost };
     },
@@ -208,6 +230,8 @@ export function useToggleLike(slug: string) {
       client.setQueryData<LikeStatusDTO>(queryKeys.like(slug), {
         likedByMe: data.liked,
         likeCount: data.likeCount,
+        viewerReaction: data.viewerReaction ?? (data.liked ? "LOVE" : null),
+        reactionCounts: data.reactionCounts,
       });
       client.setQueryData<PostDetailDTO>(queryKeys.post(slug), (prev) =>
         prev ? { ...prev, likeCount: data.likeCount } : prev,
@@ -583,24 +607,33 @@ export function useDeleteCommunityPost() {
   });
 }
 
-type SupportResult = { supported: boolean; supportCount: number };
+/** The reaction fields of a post, with older servers read as "everything was Support". */
+export function postReactionState(post: CommunityPostDTO): ReactionState {
+  if (post.reactionCounts) {
+    return { reactionCounts: post.reactionCounts, viewerReaction: post.viewerReaction ?? null };
+  }
+  return reactionsFromLegacy(post);
+}
 
-export function useToggleSupport(id: string) {
+/**
+ * Set (or, with null, take back) the viewer's reaction on a community post.
+ * Optimistic across every cached list and thread, rolled back on error and
+ * replaced by the server's counts on success.
+ */
+export function useSetReaction(id: string) {
   const client = useQueryClient();
+  const path = `/community/${encodeURIComponent(id)}/reaction`;
   return useMutation({
-    mutationFn: () => api.post<SupportResult>(`/community/${encodeURIComponent(id)}/support`, {}),
-    onMutate: async () => {
+    mutationFn: (reaction: Reaction | null) =>
+      reaction
+        ? api.put<ReactionResultDTO>(path, { reaction })
+        : api.delete<ReactionResultDTO>(path),
+    onMutate: async (reaction) => {
       await client.cancelQueries({ queryKey: ["community"] });
       const previousLists = client.getQueriesData<unknown>({ queryKey: ["community"] }) as ListSnapshot[];
       client.setQueriesData<unknown>({ queryKey: ["community"] }, (data: unknown) =>
         mapCommunityPosts(data, (post) =>
-          post.id === id
-            ? {
-                ...post,
-                viewerSupported: !post.viewerSupported,
-                supportCount: Math.max(0, post.supportCount + (post.viewerSupported ? -1 : 1)),
-              }
-            : post,
+          post.id === id ? { ...post, ...applyViewerReaction(postReactionState(post), reaction) } : post,
         ),
       );
       return { previousLists };
@@ -614,14 +647,38 @@ export function useToggleSupport(id: string) {
       client.setQueriesData<unknown>({ queryKey: ["community"] }, (data: unknown) =>
         mapCommunityPosts(data, (post) =>
           post.id === id
-            ? { ...post, viewerSupported: result.supported, supportCount: result.supportCount }
+            ? {
+                ...post,
+                viewerReaction: result.viewerReaction,
+                reactionCounts: result.reactionCounts,
+                supportCount: result.supportCount,
+                viewerSupported: result.supported,
+              }
             : post,
         ),
       );
     },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["community"] });
+      void client.invalidateQueries({ queryKey: ["reactors", id] });
     },
+  });
+}
+
+/** Who reacted to a community post, newest first (optionally one emoji). */
+export function useReactors(id: string, reaction?: Reaction) {
+  return useInfiniteQuery({
+    queryKey: ["reactors", id, reaction ?? "all"] as const,
+    initialPageParam: null as string | null,
+    enabled: Boolean(id),
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams();
+      if (pageParam) search.set("cursor", pageParam);
+      if (reaction) search.set("reaction", reaction);
+      const qs = search.toString();
+      return api.get<Page<ReactorDTO>>(`/community/${encodeURIComponent(id)}/reactions${qs ? `?${qs}` : ""}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
   });
 }
 
