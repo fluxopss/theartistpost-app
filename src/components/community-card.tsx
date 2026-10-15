@@ -6,7 +6,6 @@ import { originUrl } from "@/api/client";
 import { isApiError } from "@/api/errors";
 import { postReactionState, useDeleteCommunityPost, useSetReaction } from "@/api/hooks";
 import type { CommunityPostDTO } from "@/api/types";
-import { displayHandle, useAuth } from "@/auth";
 import { ArtistAvatar } from "@/components/artist-avatar";
 import { ContentActionsMenu } from "@/components/content-actions-menu";
 import { Icon } from "@/components/icon";
@@ -16,7 +15,9 @@ import { ReactionButton } from "@/components/reaction-button";
 import { ReactionSummary } from "@/components/reaction-summary";
 import { ThemedText } from "@/components/themed-text";
 import { formatActivityTime } from "@/domain/activity/time";
+import { isSelfHandle } from "@/domain/people/self-handle";
 import { useCommunityGate } from "@/hooks/use-community-gate";
+import { useSelfHandle } from "@/hooks/use-self-handle";
 import { minTapTarget, radius, spacing, useBrandColors } from "@/theme";
 
 type Variant = "feed" | "thread" | "reply";
@@ -71,11 +72,10 @@ export function CommunityCard({
   onDeleted?: () => void;
 }) {
   const palette = useBrandColors();
-  const { user } = useAuth();
   const remove = useDeleteCommunityPost();
   const isReply = variant === "reply";
   const time = formatActivityTime(post.createdAt);
-  const isOwn = Boolean(user) && post.author.handle === displayHandle(user);
+  const isOwn = isSelfHandle(post.author.handle, useSelfHandle());
 
   const header = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>

@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { displayHandle, useAuth } from "@/auth";
+import { useAuth } from "@/auth";
 import { isApiError } from "@/api/errors";
 import { useCreateComment } from "@/api/hooks";
 import type { PostDetailDTO } from "@/api/types";
@@ -11,6 +11,8 @@ import { ContentActionsMenu } from "@/components/content-actions-menu";
 import { ListGroup } from "@/components/list-row";
 import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
+import { isSelfHandle } from "@/domain/people/self-handle";
+import { useSelfHandle } from "@/hooks/use-self-handle";
 import { spacing, useBrandColors } from "@/theme";
 
 const dateFormat = new Intl.DateTimeFormat("en-US", {
@@ -35,6 +37,7 @@ function formatDate(iso: string) {
 export function CommentList({ post }: { post: PostDetailDTO }) {
   const palette = useBrandColors();
   const { user } = useAuth();
+  const selfHandle = useSelfHandle();
   const createComment = useCreateComment(post.slug);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +104,7 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
                     <ContentActionsMenu
                       target={{ type: "COMMENT", id: comment.id }}
                       authorHandle={comment.author.handle ?? undefined}
-                      isOwn={Boolean(comment.author.handle) && comment.author.handle === displayHandle(user)}
+                      isOwn={isSelfHandle(comment.author.handle, selfHandle)}
                     />
                   </View>
                 </View>
