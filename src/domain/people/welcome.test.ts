@@ -22,13 +22,17 @@ describe("welcomeSteps", () => {
     expect(welcomeSteps({ ...complete, termsAcceptedAt: null })).toEqual(["guidelines"]);
     expect(welcomeSteps({ ...complete, handle: null })).toEqual(["profile"]);
     expect(welcomeSteps({ ...complete, topics: [] })).toEqual(["topics"]);
-    expect(welcomeSteps({ ...complete, image: null })).toEqual(["profile"]);
   });
 
-  it("still offers an artist (who already has a handle) the photo on the profile step", () => {
+  it("never sends someone back through onboarding just for a missing photo", () => {
+    expect(welcomeSteps({ ...complete, image: null })).toEqual([]);
+    expect(welcomeSteps({ ...complete, topics: [], image: null })).toEqual(["topics"]);
+  });
+
+  it("does not ask an artist (who already has a handle) for a profile step", () => {
     expect(
       welcomeSteps({ handle: "realpainter", termsAcceptedAt: null, topics: [], image: null }),
-    ).toEqual(["guidelines", "profile", "topics"]);
+    ).toEqual(["guidelines", "topics"]);
   });
 });
 

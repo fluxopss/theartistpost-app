@@ -16,7 +16,9 @@ export type WelcomeProfile = {
 export function welcomeSteps(profile: WelcomeProfile): WelcomeStep[] {
   const steps: WelcomeStep[] = [];
   if (!profile.termsAcceptedAt) steps.push("guidelines");
-  if (!profile.handle || !profile.image) steps.push("profile");
+  // The profile step (name, handle, optional photo) is for people with no handle yet;
+  // nobody is sent back through onboarding just to add a photo.
+  if (!profile.handle) steps.push("profile");
   if (profile.topics.length === 0) steps.push("topics");
   return steps;
 }
