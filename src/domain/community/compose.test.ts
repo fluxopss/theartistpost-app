@@ -73,4 +73,13 @@ describe("validateCommunityBody", () => {
   it("rejects more than 500 characters", () => {
     expect(validateCommunityBody("x".repeat(COMMUNITY_BODY_MAX + 1))).toMatchObject({ ok: false });
   });
+
+  it("counts what a person sees: 500 emoji fit, 501 do not", () => {
+    expect(validateCommunityBody("🎨".repeat(COMMUNITY_BODY_MAX))).toMatchObject({ ok: true });
+    expect(validateCommunityBody("🎨".repeat(COMMUNITY_BODY_MAX + 1))).toMatchObject({ ok: false });
+  });
+
+  it("keeps emoji exactly as typed", () => {
+    expect(validateCommunityBody("  Great show 🔥👏  ")).toEqual({ ok: true, body: "Great show 🔥👏" });
+  });
 });

@@ -2,6 +2,7 @@ import { forwardRef, useState } from "react";
 import { TextInput, type TextInputProps, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import { graphemeCount, nativeMaxLength } from "@/domain/text/graphemes";
 import { colors, fonts, radius, spacing, type, useBrandColors } from "@/theme";
 
 /**
@@ -15,8 +16,17 @@ export const TextField = forwardRef<
     helper?: string;
     error?: string | null;
     showCount?: boolean;
+    /**
+     * Limit counted by what a person sees (an emoji is one). Use instead of
+     * `maxLength`, which counts UTF-16 code units and would stop people at
+     * ~250 emoji.
+     */
+    maxCharacters?: number;
   }
->(function TextField({ label, helper, error, showCount, maxLength, value, style, onFocus, onBlur, ...props }, ref) {
+>(function TextField(
+  { label, helper, error, showCount, maxLength, maxCharacters, value, style, onFocus, onBlur, ...props },
+  ref,
+) {
   const palette = useBrandColors();
   const [focused, setFocused] = useState(false);
   const borderColor = error ? palette.danger : focused ? palette.accent : palette.separatorStrong;
@@ -29,7 +39,7 @@ export const TextField = forwardRef<
       <TextInput
         ref={ref}
         value={value}
-        maxLength={maxLength}
+        maxLength={maxCharacters !== undefined ? nativeMaxLength(maxCharacters) : maxLength}
         accessibilityLabel={label}
         accessibilityLabelledBy={`${label}-label`}
         accessibilityHint={error ?? helper}
@@ -61,7 +71,7 @@ export const TextField = forwardRef<
         ]}
         {...props}
       />
-      {error || helper || (showCount && maxLength) ? (
+      {error || helper || (showCount && (maxCharacters ?? maxLength)) ? (
         <View style={{ flexDirection: "row", gap: spacing.xs }}>
           <ThemedText
             variant="footnote"
@@ -71,9 +81,10 @@ export const TextField = forwardRef<
           >
             {error ?? helper ?? ""}
           </ThemedText>
-          {showCount && maxLength ? (
+          {showCount && (maxCharacters ?? maxLength) ? (
             <ThemedText variant="footnote" tone="muted" style={{ fontVariant: ["tabular-nums"] }}>
-              {(value ?? "").length}/{maxLength}
+              {maxCharacters !== undefined ? graphemeCount(value ?? "") : (value ?? "").length}/
+              {maxCharacters ?? maxLength}
             </ThemedText>
           ) : null}
         </View>

@@ -1,3 +1,5 @@
+import type { Reaction, ReactionCounts } from "@/domain/community/reactions";
+
 /** Wire types for /api/v1 — mirror of theartistpost `src/server/api` DTOs. */
 
 export type EventStatus = "upcoming" | "live" | "closed";
@@ -52,11 +54,16 @@ export type CommentsPageDTO = {
 export type LikeStateDTO = {
   liked: boolean;
   likeCount: number;
+  /** Reactions fields arrive from servers that support them. */
+  viewerReaction?: Reaction | null;
+  reactionCounts?: ReactionCounts;
 };
 
 export type LikeStatusDTO = {
   likedByMe: boolean | null;
   likeCount: number;
+  viewerReaction?: Reaction | null;
+  reactionCounts?: ReactionCounts;
 };
 
 export type PostDetailDTO = PostSummaryDTO & { comments: CommentDTO[] };
@@ -185,11 +192,31 @@ export type CommunityPostDTO = {
   topic: TopicDTO | null;
   parentId: string | null;
   author: { handle: string; name: string; avatarUrl: string | null; isArtist: boolean };
+  /** Total reactions of any kind. */
   supportCount: number;
   replyCount: number;
+  /** True when the viewer has reacted with anything. */
   viewerSupported: boolean;
+  /** Per-emoji counts. Absent only on servers that predate reactions. */
+  reactionCounts?: ReactionCounts;
+  viewerReaction?: Reaction | null;
   canDelete: boolean;
   createdAt: string;
+};
+
+/** One person who reacted, with the emoji they chose. */
+export type ReactorDTO = {
+  reaction: Reaction;
+  person: PersonSummaryDTO;
+  createdAt: string;
+};
+
+/** Server reply to setting or clearing a reaction. */
+export type ReactionResultDTO = {
+  viewerReaction: Reaction | null;
+  reactionCounts: ReactionCounts;
+  supportCount: number;
+  supported: boolean;
 };
 
 export type NotificationType = "FOLLOW" | "LIKE" | "COMMENT" | "REPLY" | "SUPPORT" | "MENTION";

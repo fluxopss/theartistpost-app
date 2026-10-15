@@ -102,7 +102,7 @@ export function ComposeCommunityScreen() {
           value={body}
           onChangeText={setBody}
           multiline
-          maxLength={COMMUNITY_BODY_MAX}
+          maxCharacters={COMMUNITY_BODY_MAX}
           showCount
           placeholder={option.prompt}
           helper="Mention someone with @handle."

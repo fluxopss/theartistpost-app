@@ -2,17 +2,17 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import type { PersonSummaryDTO } from "@/api/types";
-import { useAuth } from "@/auth";
 import { ArtistAvatar } from "@/components/artist-avatar";
 import { FollowButton } from "@/components/follow-button";
 import { ThemedText } from "@/components/themed-text";
+import { isSelfHandle } from "@/domain/people/self-handle";
+import { useSelfHandle } from "@/hooks/use-self-handle";
 import { minTapTarget, spacing, useBrandColors } from "@/theme";
 
 /** One person in a list: avatar, name, @handle, headline, and a Follow button. */
 export function PersonRow({ person }: { person: PersonSummaryDTO }) {
   const palette = useBrandColors();
-  const { user } = useAuth();
-  const isSelf = Boolean(user) && (user?.handle ?? null) === person.handle;
+  const isSelf = isSelfHandle(person.handle, useSelfHandle());
 
   return (
     <View
