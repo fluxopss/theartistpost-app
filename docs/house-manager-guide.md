@@ -53,7 +53,7 @@ Only **open** reports appear there. Each card shows what was reported, the reaso
 
 **Note:** Dismiss doesn't bring back a Wall work that was archived. **Ask Jonathan** how to restore one.
 
-**Note:** the message members see says the house team reviews reports within 24 hours. **Ask Jonathan** who answers reports in that window, and whether the promise should stay as it is.
+**Who answers reports:** Robbie Alvarez (founder) reviews reports within 24 hours. That is decided (2026-10-15), and the message members see stays as it is.
 
 ---
 
@@ -71,12 +71,14 @@ Blocking is for members. You don't need to block anyone to moderate.
 
 ## What members see
 
-- **Community Guidelines.** Members read them during the welcome steps. **Ask Jonathan:** whether they should also be linked from Settings. Right now they are not.
+- **Community Guidelines.** Members read them during the welcome steps. They are approved as written (2026-10-15). **Ask Jonathan:** whether they should also be linked from Settings. Right now they are not.
 - **Report and Block** in the `⋯` menu on posts, notes, and profiles.
 - **Settings → Blocked** shows who a member has blocked, with a way to unblock.
 - **"Let's keep it kind — please rephrase."** appears when the word filter stops a post or note.
 - **"Thanks — the house team reviews reports within 24 hours."** appears after a report is sent.
 - **Activity** shows follows, likes, support, replies, mentions, and comments.
+
+**Artist payment usernames are coming.** Artists will get an optional spot on their profile for their personal payment usernames (such as Venmo, Cash App, or PayPal.me). It links out to those services. Payments happen outside the app. The app does no payment processing for these, and TAP takes nothing from them. Donations made through the app all go to The Artist Post.
 
 ---
 
@@ -116,9 +118,9 @@ Members can post to the Community board without being approved. Approval only co
 - [ ] Sign in with your admin email and check that **Manage the house** appears in Settings.
 - [ ] Review every pending artist request. Approve or revoke each one, with the confirm step.
 - [ ] Open the Moderation queue and clear what is open. Aim for 24 hours.
-- [ ] Read the Community Guidelines once from the welcome steps. Check they say what you want.
+- [x] Community Guidelines approved as written (2026-10-15).
 - [ ] Post one real update on the Community board, so members see the house is here.
 - [ ] Test Report and Block on a test account (not a real member).
-- [ ] Settle who answers reports within 24 hours. **Ask Jonathan.**
+- [x] Robbie Alvarez (founder) reviews reports within 24 hours (decided 2026-10-15).
 - [ ] Decide how to handle email deletion requests. **Ask Jonathan.**
 - [ ] Ask Jonathan about anything marked above.
