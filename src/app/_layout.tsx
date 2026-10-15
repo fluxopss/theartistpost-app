@@ -120,6 +120,19 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
                 <Stack.Screen name="artist-requests" options={{ headerShown: true, title: "Artist requests" }} />
+                <Stack.Screen name="manage-events" options={{ headerShown: true, title: "Manage events" }} />
+                <Stack.Screen name="manage-event/[id]" options={{ headerShown: true, title: "Night" }} />
+                <Stack.Screen name="my-nights" options={{ headerShown: true, title: "My nights" }} />
+                <Stack.Screen
+                  name="event-form"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.9, 1],
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
                 <Stack.Screen
                   name="note/[id]"
                   options={{

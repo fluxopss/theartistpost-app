@@ -48,6 +48,17 @@ import type {
   AdminUserRowDTO,
   AdminUserDTO,
   AdminUserUpdateInput,
+  AdminEventDTO,
+  AdminEventInput,
+  AdminEventListDTO,
+  AttendeeListDTO,
+  CheckInInput,
+  CheckInListDTO,
+  CheckInStateDTO,
+  MyRsvpDTO,
+  MyRsvpItemDTO,
+  SetRsvpInput,
+  SetRsvpResult,
 } from "./types";
 
 export const queryKeys = {
@@ -77,6 +88,13 @@ export const queryKeys = {
   blocks: ["blocks"] as const,
   adminReports: (status: string) => ["admin", "reports", status] as const,
   adminUsers: (pendingOnly: boolean) => ["admin", "users", pendingOnly ? "pending" : "all"] as const,
+  myRsvp: (eventId: string) => ["events", eventId, "rsvp"] as const,
+  myRsvps: ["me", "rsvps"] as const,
+  checkIn: (eventId: string) => ["events", eventId, "checkin"] as const,
+  adminEvents: ["admin", "events"] as const,
+  adminEvent: (id: string) => ["admin", "events", id] as const,
+  adminAttendees: (id: string) => ["admin", "events", id, "rsvps"] as const,
+  adminCheckIns: (id: string) => ["admin", "events", id, "checkins"] as const,
 };
 
 export function useEvents() {
@@ -822,5 +840,145 @@ export function useUpdateAdminUser() {
       void client.invalidateQueries({ queryKey: ["people"] });
       void client.invalidateQueries({ queryKey: ["person"] });
     },
+  });
+}
+
+// --- Event RSVPs and check-ins (managed nights) ------------------------------
+
+const enc = encodeURIComponent;
+
+/** My answer for a night plus how full it is. Needs a signed-in member. */
+export function useMyRsvp(eventId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.myRsvp(eventId),
+    queryFn: ({ signal }) => api.get<MyRsvpDTO>(`/events/${enc(eventId)}/rsvp`, signal),
+    enabled: Boolean(eventId) && enabled,
+    retry: false,
+  });
+}
+
+export function useSetRsvp(eventId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SetRsvpInput) => api.post<SetRsvpResult>(`/events/${enc(eventId)}/rsvp`, input),
+    onSuccess: ({ rsvp, summary }) => {
+      client.setQueryData<MyRsvpDTO>(queryKeys.myRsvp(eventId), { rsvp, summary });
+      void client.invalidateQueries({ queryKey: queryKeys.myRsvps });
+    },
+  });
+}
+
+/** Nights I said going or maybe to. */
+export function useMyRsvps(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.myRsvps,
+    queryFn: ({ signal }) => api.get<{ items: MyRsvpItemDTO[] }>("/me/rsvps", signal),
+    enabled,
+    retry: false,
+  });
+}
+
+/** Where check-in stands. Never asks the device for a location. */
+export function useCheckInState(eventId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.checkIn(eventId),
+    queryFn: ({ signal }) => api.get<CheckInStateDTO>(`/events/${enc(eventId)}/checkin`, signal),
+    enabled: Boolean(eventId) && enabled,
+    retry: false,
+  });
+}
+
+export function useCheckIn(eventId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CheckInInput) => api.post<CheckInStateDTO>(`/events/${enc(eventId)}/checkin`, input),
+    onSuccess: (state) => {
+      client.setQueryData(queryKeys.checkIn(eventId), state);
+    },
+  });
+}
+
+// --- Admin: manage events ----------------------------------------------------
+
+function refreshEventSurfaces(client: QueryClient) {
+  void client.invalidateQueries({ queryKey: queryKeys.adminEvents });
+  void client.invalidateQueries({ queryKey: queryKeys.events });
+  void client.invalidateQueries({ queryKey: queryKeys.featuredNight });
+}
+
+export function useAdminEvents(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.adminEvents,
+    queryFn: ({ signal }) => api.get<AdminEventListDTO>("/admin/events", signal),
+    enabled,
+  });
+}
+
+export function useAdminEvent(id: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.adminEvent(id),
+    queryFn: ({ signal }) => api.get<{ event: AdminEventDTO }>(`/admin/events/${enc(id)}`, signal),
+    enabled: Boolean(id) && enabled,
+  });
+}
+
+export function useCreateAdminEvent() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AdminEventInput) => api.post<{ event: AdminEventDTO }>("/admin/events", input),
+    onSuccess: () => refreshEventSurfaces(client),
+  });
+}
+
+export function useUpdateAdminEvent(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<AdminEventInput>) =>
+      api.patch<{ event: AdminEventDTO }>(`/admin/events/${enc(id)}`, input),
+    onSuccess: ({ event }) => {
+      client.setQueryData(queryKeys.adminEvent(id), { event });
+      refreshEventSurfaces(client);
+    },
+  });
+}
+
+function useEventAction(action: "publish" | "cancel" | "duplicate") {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.post<{ event: AdminEventDTO }>(`/admin/events/${enc(id)}/${action}`, {}),
+    onSuccess: ({ event }) => {
+      client.setQueryData(queryKeys.adminEvent(event.id), { event });
+      refreshEventSurfaces(client);
+    },
+  });
+}
+
+export const usePublishAdminEvent = () => useEventAction("publish");
+export const useCancelAdminEvent = () => useEventAction("cancel");
+export const useDuplicateAdminEvent = () => useEventAction("duplicate");
+
+export function useEventAttendees(id: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.adminAttendees(id),
+    queryFn: ({ signal }) => api.get<AttendeeListDTO>(`/admin/events/${enc(id)}/rsvps`, signal),
+    enabled: Boolean(id) && enabled,
+  });
+}
+
+/** Live count: refreshes every 15 seconds while the screen is open. */
+export function useEventCheckIns(id: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.adminCheckIns(id),
+    queryFn: ({ signal }) => api.get<CheckInListDTO>(`/admin/events/${enc(id)}/checkins`, signal),
+    enabled: Boolean(id) && enabled,
+    refetchInterval: 15_000,
+  });
+}
+
+export function useUploadEventCover() {
+  return useMutation({
+    mutationFn: (file: UploadFile) =>
+      api.upload<{ url: string }>("/admin/events/media", { uri: file.uri, name: file.name, mimeType: file.type }),
   });
 }

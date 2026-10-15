@@ -3,8 +3,9 @@ import { useState } from "react";
 import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
-import { useFeaturedNight } from "@/api/hooks";
+import { useFeaturedNight, useMyRsvp } from "@/api/hooks";
 import type { EventDTO } from "@/api/types";
+import { useAuth } from "@/auth";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
@@ -13,6 +14,7 @@ import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { TicketPass } from "@/components/ticket-pass";
 import { copy } from "@/content/site";
+import { passFromRsvp } from "@/domain/events/rsvp";
 import { floorBeats, formatNightWhen, nightPhase, stampWord } from "@/domain/night/program";
 import { useNight } from "@/storage/night";
 import { useStudio } from "@/storage/studio";
@@ -20,6 +22,7 @@ import { fonts, paper, radius, spacing } from "@/theme";
 import { addEventToCalendar, shareEvent } from "@/utils/calendar";
 import { contact, tabRoutes } from "@/utils/links";
 
+import { EventCheckInCard } from "../event/event-check-in-card";
 import { Countdown } from "./countdown";
 import { FloorRooms } from "./floor-rooms";
 import { NightSparks } from "./night-sparks";
@@ -75,8 +78,17 @@ export function NightScreen() {
 }
 
 function NightRoom({ event }: { event: EventDTO }) {
-  const { pass, sparks, addSpark, lit, setLit } = useNight(event.id);
+  const { pass: devicePass, sparks, addSpark, lit, setLit } = useNight(event.id);
   const { studio, isGuest } = useStudio();
+  const { user } = useAuth();
+  // A managed night's pass is a copy of the server record: once the server has
+  // answered, it decides (a seat given up elsewhere clears the pass here too).
+  const mine = useMyRsvp(event.id, Boolean(user) && event.source === "db");
+  const serverPass =
+    user && mine.data
+      ? passFromRsvp(mine.data.rsvp, { name: user.name, email: user.email }, mine.data.rsvp?.updatedAt ?? "")
+      : null;
+  const pass = event.source === "db" && user && mine.data ? serverPass : devicePass;
   const [tornByHand, setTornByHand] = useState(false);
   const phase = nightPhase(event);
   const when = formatNightWhen(event);
@@ -146,7 +158,7 @@ function NightRoom({ event }: { event: EventDTO }) {
                   title="Directions"
                   variant="secondary"
                   icon="directions"
-                  onPress={contact.directions}
+                  onPress={() => contact.directions(event.venueAddress)}
                   style={{ flexGrow: 1 }}
                 />
                 <Button
@@ -161,7 +173,9 @@ function NightRoom({ event }: { event: EventDTO }) {
           ) : (
             <>
               <ThemedText variant="body">
-                Put your name on the pass. Robbie gets your seat, and the pass stays on this phone for the door.
+                {event.source === "db"
+                  ? "Hold a seat on your account. The pass stays on this phone for the door."
+                  : "Put your name on the pass. Robbie gets your seat, and the pass stays on this phone for the door."}
               </ThemedText>
               <Button
                 title={phase === "closed" ? "This night has closed" : copy.night.hold}
@@ -175,6 +189,8 @@ function NightRoom({ event }: { event: EventDTO }) {
           )}
         </TearStub>
       </View>
+
+      {event.source === "db" ? <EventCheckInCard event={event} /> : null}
 
       <FloorRooms rooms={floorBeats(event)} lit={lit} onChange={setLit} />
 
