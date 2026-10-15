@@ -49,7 +49,7 @@ export function ReplyBar({ parentId, kind }: { parentId: string; kind: Community
         value={body}
         onChangeText={setBody}
         multiline
-        maxLength={COMMUNITY_BODY_MAX}
+        maxCharacters={COMMUNITY_BODY_MAX}
         showCount
         placeholder="Say something kind…"
         textAlignVertical="top"

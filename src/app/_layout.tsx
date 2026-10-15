@@ -108,6 +108,16 @@ export default function RootLayout() {
                     headerShown: false,
                   }}
                 />
+                <Stack.Screen
+                  name="reactors"
+                  options={{
+                    presentation: "formSheet",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.6, 1],
+                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                    headerShown: false,
+                  }}
+                />
                 <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
                 <Stack.Screen name="artist-requests" options={{ headerShown: true, title: "Artist requests" }} />
                 <Stack.Screen

@@ -122,7 +122,7 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
             label="Leave a Wall note"
             value={body}
             onChangeText={setBody}
-            maxLength={280}
+            maxCharacters={280}
             showCount
             multiline
             numberOfLines={3}

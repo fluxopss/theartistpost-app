@@ -1,4 +1,3 @@
-import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Share, View } from "react-native";
@@ -6,16 +5,19 @@ import { Share, View } from "react-native";
 import { displayHandle, useAuth } from "@/auth";
 import { originUrl } from "@/api/client";
 import { isApiError } from "@/api/errors";
-import { useLikeStatus, usePost, useToggleLike } from "@/api/hooks";
+import { useLikeStatus, usePost, useSetWallReaction } from "@/api/hooks";
 import type { PostDetailDTO } from "@/api/types";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { ContentActionsMenu } from "@/components/content-actions-menu";
+import { ReactionButton } from "@/components/reaction-button";
+import { ReactionSummary } from "@/components/reaction-summary";
 import { EmptyState } from "@/components/empty-state";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { copy, site } from "@/content/site";
+import { emptyReactionCounts, type Reaction } from "@/domain/community/reactions";
 import { mediaKindLabel } from "@/domain/posts/media";
 import { useSaves } from "@/storage/saves";
 import { radius, spacing, useBrandColors } from "@/theme";
@@ -89,24 +91,27 @@ function PostBody({ post }: { post: PostDetailDTO }) {
   const { isPostSaved, togglePost } = useSaves();
   const saved = isPostSaved(post.id);
   const likeStatus = useLikeStatus(post.slug);
-  const toggleLike = useToggleLike(post.slug);
+  const setReaction = useSetWallReaction(post.slug);
   const [likeError, setLikeError] = useState<string | null>(null);
-  const liked = user ? likeStatus.data?.likedByMe === true : false;
+  const viewerReaction: Reaction | null = user
+    ? (likeStatus.data?.viewerReaction ?? (likeStatus.data?.likedByMe === true ? "LOVE" : null))
+    : null;
   const likeCount = likeStatus.data?.likeCount ?? post.likeCount;
+  // Servers without reactions only know hearts: show them as LOVE.
+  const reactionCounts = likeStatus.data?.reactionCounts ?? { ...emptyReactionCounts(), LOVE: likeCount };
   const webUrl = originUrl(`/post/${post.slug}`);
   const date = published(post.publishedAt);
 
-  const onLike = async () => {
+  const onReact = async (next: Reaction | null) => {
     if (!user) {
       router.push("/join");
       return;
     }
     setLikeError(null);
-    if (process.env.EXPO_OS === "ios") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
-      await toggleLike.mutateAsync();
+      await setReaction.mutateAsync(next);
     } catch (cause) {
-      setLikeError(isApiError(cause) ? cause.message : "Could not update that like.");
+      setLikeError(isApiError(cause) ? cause.message : "Could not save that reaction.");
     }
   };
 
@@ -124,21 +129,22 @@ function PostBody({ post }: { post: PostDetailDTO }) {
         </ThemedText>
         <ArtistByline artist={post.artist} />
         <ThemedText variant="footnote" tone="muted">
-          {plural(likeCount, "like")}
+          {plural(likeCount, "reaction")}
           {user ? "" : " · join to leave yours"}
         </ThemedText>
+        <ReactionSummary counts={reactionCounts} />
       </View>
 
       <View style={{ flexDirection: "row", gap: spacing.xs }}>
-        <Button
-          title={liked ? `Liked · ${likeCount}` : `Like · ${likeCount}`}
-          icon={liked ? "heartFill" : "heart"}
-          variant="secondary"
-          accessibilityLabel={liked ? "Remove like" : "Like this work"}
-          loading={toggleLike.isPending}
-          onPress={() => void onLike()}
-          style={{ flex: 1 }}
-        />
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <ReactionButton
+            state={{ viewerReaction, reactionCounts }}
+            // The Wall's one-tap is the heart, as the Like always was.
+            defaultReaction="LOVE"
+            disabled={setReaction.isPending}
+            onSelect={(next) => void onReact(next)}
+          />
+        </View>
         <Button
           title={saved ? "Saved" : "Save"}
           icon={saved ? "bookmarkFill" : "bookmark"}

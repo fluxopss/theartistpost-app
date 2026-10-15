@@ -1,11 +1,10 @@
-import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { originUrl } from "@/api/client";
 import { isApiError } from "@/api/errors";
-import { useDeleteCommunityPost, useToggleSupport } from "@/api/hooks";
+import { postReactionState, useDeleteCommunityPost, useSetReaction } from "@/api/hooks";
 import type { CommunityPostDTO } from "@/api/types";
 import { displayHandle, useAuth } from "@/auth";
 import { ArtistAvatar } from "@/components/artist-avatar";
@@ -13,6 +12,8 @@ import { ContentActionsMenu } from "@/components/content-actions-menu";
 import { Icon } from "@/components/icon";
 import { KindChip } from "@/components/kind-chip";
 import { MentionText } from "@/components/mention-text";
+import { ReactionButton } from "@/components/reaction-button";
+import { ReactionSummary } from "@/components/reaction-summary";
 import { ThemedText } from "@/components/themed-text";
 import { formatActivityTime } from "@/domain/activity/time";
 import { useCommunityGate } from "@/hooks/use-community-gate";
@@ -28,59 +29,35 @@ function openThread(id: string) {
   router.push({ pathname: "/community/[id]", params: { id } });
 }
 
-function SupportButton({ post }: { post: CommunityPostDTO }) {
-  const palette = useBrandColors();
-  const support = useToggleSupport(post.id);
+function Reactions({ post }: { post: CommunityPostDTO }) {
+  const setReaction = useSetReaction(post.id);
   const { ensureMember } = useCommunityGate();
-
-  const label = post.viewerSupported
-    ? `Supported, ${post.supportCount}. Double tap to remove your support`
-    : `Support, ${post.supportCount} so far`;
+  const state = postReactionState(post);
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected: post.viewerSupported, busy: support.isPending }}
-      hitSlop={spacing.xxs}
-      onPress={() => {
-        if (!ensureMember()) return;
-        if (process.env.EXPO_OS === "ios") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        support.mutate(undefined, {
-          onError: (cause) =>
-            Alert.alert("Could not support that", isApiError(cause) ? cause.message : "Try again in a moment."),
-        });
-      }}
-      style={({ pressed }) => ({
-        minHeight: minTapTarget,
-        minWidth: minTapTarget,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: spacing.xxs,
-        opacity: pressed ? 0.6 : 1,
-      })}
-    >
-      <Icon
-        name="sparkle"
-        size={20}
-        weight={post.viewerSupported ? "bold" : "regular"}
-        color={post.viewerSupported ? palette.accent : palette.textMuted}
+    <>
+      <ReactionButton
+        state={state}
+        disabled={setReaction.isPending}
+        onSelect={(next) => {
+          if (!ensureMember()) return;
+          setReaction.mutate(next, {
+            onError: (cause) =>
+              Alert.alert("Could not save that", isApiError(cause) ? cause.message : "Try again in a moment."),
+          });
+        }}
       />
-      <ThemedText
-        variant="subheadline"
-        tone={post.viewerSupported ? "accent" : "muted"}
-        style={{ fontVariant: ["tabular-nums"] }}
-      >
-        {post.viewerSupported ? "Supported" : "Support"}
-        {post.supportCount > 0 ? ` · ${post.supportCount}` : ""}
-      </ThemedText>
-    </Pressable>
+      <ReactionSummary
+        counts={state.reactionCounts}
+        onPress={() => router.push({ pathname: "/reactors", params: { id: post.id } })}
+      />
+    </>
   );
 }
 
 /**
  * One community post: who, what kind, the words (with tappable @mentions),
- * an optional photo, and Support / Replies. `feed` opens the thread when
+ * an optional photo, and React / Replies. `feed` opens the thread when
  * tapped; `thread` is the opened post; `reply` is a compact row.
  */
 export function CommunityCard({
@@ -165,7 +142,7 @@ export function CommunityCard({
 
   const actions = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg }}>
-      <SupportButton post={post} />
+      <Reactions post={post} />
       {!isReply ? (
         <Pressable
           accessibilityRole="button"
