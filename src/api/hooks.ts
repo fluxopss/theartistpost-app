@@ -34,6 +34,9 @@ import type {
   ReportInput,
   ReportStatus,
   TopicDTO,
+  AdminUserRowDTO,
+  AdminUserDTO,
+  AdminUserUpdateInput,
 } from "./types";
 
 export const queryKeys = {
@@ -62,6 +65,7 @@ export const queryKeys = {
   notifications: ["notifications"] as const,
   blocks: ["blocks"] as const,
   adminReports: (status: string) => ["admin", "reports", status] as const,
+  adminUsers: (pendingOnly: boolean) => ["admin", "users", pendingOnly ? "pending" : "all"] as const,
 };
 
 export function useEvents() {
@@ -699,6 +703,41 @@ export function useActOnReport() {
       void client.invalidateQueries({ queryKey: ["admin", "reports"] });
       void client.invalidateQueries({ queryKey: ["community"] });
       void client.invalidateQueries({ queryKey: ["post"] });
+    },
+  });
+}
+
+/* ---------- Admin: artist requests ---------- */
+
+export type AdminUsersParams = { pendingArtist?: boolean };
+
+/** Admin member list. `pendingArtist` limits to artist requests awaiting approval (server-side). */
+export function useAdminUsers(params: AdminUsersParams = {}) {
+  const pendingOnly = params.pendingArtist === true;
+  return useInfiniteQuery({
+    queryKey: queryKeys.adminUsers(pendingOnly),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams({ take: "24" });
+      if (pendingOnly) search.set("pendingArtist", "1");
+      if (pageParam) search.set("cursor", pageParam);
+      return api.get<Page<AdminUserRowDTO>>(`/admin/users?${search}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
+    retry: false,
+  });
+}
+
+/** Approve or revoke an artist, or change a role. Waits for the server; no optimistic update. */
+export function useUpdateAdminUser() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string } & AdminUserUpdateInput) =>
+      api.patch<{ user: AdminUserDTO }>(`/admin/users/${encodeURIComponent(id)}`, body),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["admin", "users"] });
+      void client.invalidateQueries({ queryKey: ["people"] });
+      void client.invalidateQueries({ queryKey: ["person"] });
     },
   });
 }
