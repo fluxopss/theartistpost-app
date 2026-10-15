@@ -41,8 +41,13 @@ type AuthContextValue = {
   supabaseReady: boolean;
   /** Last restore/join error worth showing (cleared on success). */
   lastError: string | null;
-  joinMember: (input: JoinMemberInput) => Promise<{ ok: true } | { ok: false; error: string }>;
-  joinArtist: (input: JoinArtistInput) => Promise<{ ok: true; pendingApproval: boolean } | { ok: false; error: string }>;
+  /** `existingEmail` means that address already has an account: send them to the sign-in code. */
+  joinMember: (
+    input: JoinMemberInput,
+  ) => Promise<{ ok: true } | { ok: false; error: string; existingEmail?: boolean }>;
+  joinArtist: (
+    input: JoinArtistInput,
+  ) => Promise<{ ok: true; pendingApproval: boolean } | { ok: false; error: string; existingEmail?: boolean }>;
   requestCode: (email: string) => Promise<{ ok: true; debugCode?: string } | { ok: false; error: string }>;
   verify: (input: VerifyInput) => Promise<{ ok: true } | { ok: false; error: string }>;
   /**
@@ -204,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const message = friendlyAuthError(error, "Could not open the member door.");
       setLastError(message);
-      return { ok: false as const, error: message };
+      return { ok: false as const, error: message, existingEmail: isApiError(error) && error.code === "conflict" };
     }
   }, []);
 
@@ -221,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const message = friendlyAuthError(error, "Could not open the studio door.");
       setLastError(message);
-      return { ok: false as const, error: message };
+      return { ok: false as const, error: message, existingEmail: isApiError(error) && error.code === "conflict" };
     }
   }, []);
 
