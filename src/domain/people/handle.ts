@@ -34,3 +34,17 @@ export function validateHandle(raw: string): HandleValidation {
   }
   return { ok: true, handle };
 }
+
+/** A starting handle for the welcome step, derived from a display name. Empty when none fits. */
+export function suggestHandle(name: string): string {
+  const folded = name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/^[_-]+|[_-]+$/g, "")
+    .slice(0, 40);
+  const checked = validateHandle(folded);
+  return checked.ok ? checked.handle : "";
+}
