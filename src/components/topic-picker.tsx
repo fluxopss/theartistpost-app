@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
@@ -5,11 +6,13 @@ import { useTopics } from "@/api/hooks";
 import { Button } from "@/components/button";
 import { Chip } from "@/components/chip";
 import { Skeleton } from "@/components/skeleton";
+import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { TOPICS_MAX } from "@/domain/people/profile-form";
+import { filterTopics } from "@/domain/people/topic-search";
 import { spacing } from "@/theme";
 
-/** Pick up to 8 topics from the house's curated list. */
+/** Pick up to 8 topics from the house list; the search box narrows it as you type. */
 export function TopicPicker({
   selected,
   onChange,
@@ -18,7 +21,9 @@ export function TopicPicker({
   onChange: (slugs: string[]) => void;
 }) {
   const topics = useTopics();
+  const [search, setSearch] = useState("");
   const full = selected.length >= TOPICS_MAX;
+  const visible = useMemo(() => filterTopics(topics.data ?? [], search), [topics.data, search]);
 
   const toggle = (slug: string) => {
     onChange(selected.includes(slug) ? selected.filter((s) => s !== slug) : [...selected, slug]);
@@ -47,8 +52,23 @@ export function TopicPicker({
           <Button title="Try again" variant="secondary" onPress={() => void topics.refetch()} />
         </View>
       ) : (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
-          {(topics.data ?? []).map((topic) => (
+        <View style={{ gap: spacing.sm }}>
+          <TextField
+            label="Search topics"
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+            placeholder="Music, photo, venues..."
+          />
+          {visible.length === 0 ? (
+            <ThemedText variant="footnote" tone="muted" accessibilityLiveRegion="polite">
+              No topics match that. Try another word.
+            </ThemedText>
+          ) : null}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
+          {visible.map((topic) => (
             <Chip
               key={topic.slug}
               label={topic.name}
@@ -58,6 +78,7 @@ export function TopicPicker({
               onPress={() => toggle(topic.slug)}
             />
           ))}
+          </View>
         </View>
       )}
     </View>

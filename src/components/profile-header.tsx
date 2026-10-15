@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 
 import { ArtistAvatar } from "@/components/artist-avatar";
 import { Icon } from "@/components/icon";
@@ -19,8 +19,26 @@ export type ProfileHeaderData = {
 
 const AVATAR_SIZE = 88;
 
-/** Avatar, name, @handle, headline, place and bio. Actions go in `children`. */
-export function ProfileHeader({ profile, children }: { profile: ProfileHeaderData; children?: ReactNode }) {
+/**
+ * Avatar, name, @handle, headline, place and bio. Actions go in `children`.
+ * Your own profile passes `onAvatarPress` (tap the photo to change it) and
+ * `headlineSlot` / `bioSlot` to edit those two fields in place.
+ */
+export function ProfileHeader({
+  profile,
+  children,
+  onAvatarPress,
+  avatarBusy = false,
+  headlineSlot,
+  bioSlot,
+}: {
+  profile: ProfileHeaderData;
+  children?: ReactNode;
+  onAvatarPress?: () => void;
+  avatarBusy?: boolean;
+  headlineSlot?: ReactNode;
+  bioSlot?: ReactNode;
+}) {
   const palette = useBrandColors();
   const place = [profile.location, profile.chapterName].filter(Boolean).join(" · ");
   const summary = [
@@ -36,7 +54,40 @@ export function ProfileHeader({ profile, children }: { profile: ProfileHeaderDat
   return (
     <View style={{ gap: spacing.md }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-        <ArtistAvatar url={profile.avatarUrl} name={profile.name} size={AVATAR_SIZE} />
+        {onAvatarPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={profile.avatarUrl ? "Change your photo" : "Add a photo"}
+            disabled={avatarBusy}
+            onPress={onAvatarPress}
+            style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+          >
+            <ArtistAvatar url={profile.avatarUrl} name={profile.name} size={AVATAR_SIZE} />
+            <View
+              style={{
+                position: "absolute",
+                right: -spacing.xxs,
+                bottom: -spacing.xxs,
+                width: 28,
+                height: 28,
+                borderRadius: 14,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.bgElevated,
+                borderWidth: 1,
+                borderColor: palette.separatorStrong,
+              }}
+            >
+              {avatarBusy ? (
+                <ActivityIndicator size="small" color={palette.textMuted} />
+              ) : (
+                <Icon name="photo" size={14} color={palette.text} />
+              )}
+            </View>
+          </Pressable>
+        ) : (
+          <ArtistAvatar url={profile.avatarUrl} name={profile.name} size={AVATAR_SIZE} />
+        )}
         <View accessible accessibilityLabel={summary} style={{ flex: 1, gap: spacing.xxs }}>
           {profile.handle ? (
             <ThemedText variant="eyebrow" tone="spark-coral" numberOfLines={1} selectable>
@@ -57,7 +108,8 @@ export function ProfileHeader({ profile, children }: { profile: ProfileHeaderDat
         </View>
       </View>
 
-      {profile.headline ? <ThemedText variant="headline">{profile.headline}</ThemedText> : null}
+      {headlineSlot ??
+        (profile.headline ? <ThemedText variant="headline">{profile.headline}</ThemedText> : null)}
       {place ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xxs }}>
           <Icon name="mapPin" size={14} color={palette.textMuted} />
@@ -66,11 +118,12 @@ export function ProfileHeader({ profile, children }: { profile: ProfileHeaderDat
           </ThemedText>
         </View>
       ) : null}
-      {profile.bio ? (
-        <ThemedText variant="body" selectable>
-          {profile.bio}
-        </ThemedText>
-      ) : null}
+      {bioSlot ??
+        (profile.bio ? (
+          <ThemedText variant="body" selectable>
+            {profile.bio}
+          </ThemedText>
+        ) : null)}
       {children}
     </View>
   );
