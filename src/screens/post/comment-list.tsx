@@ -2,11 +2,12 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { useAuth } from "@/auth";
+import { displayHandle, useAuth } from "@/auth";
 import { isApiError } from "@/api/errors";
 import { useCreateComment } from "@/api/hooks";
 import type { PostDetailDTO } from "@/api/types";
 import { Button } from "@/components/button";
+import { ContentActionsMenu } from "@/components/content-actions-menu";
 import { ListGroup } from "@/components/list-row";
 import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
@@ -78,8 +79,6 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
             return (
               <View
                 key={comment.id}
-                accessible
-                accessibilityLabel={`${comment.author.name}${date ? `, ${date}` : ""}: ${comment.body}`}
                 style={{
                   gap: spacing.xxs,
                   marginLeft: spacing.md,
@@ -98,6 +97,13 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
                       {date}
                     </ThemedText>
                   ) : null}
+                  <View style={{ marginLeft: "auto" }}>
+                    <ContentActionsMenu
+                      target={{ type: "COMMENT", id: comment.id }}
+                      authorHandle={comment.author.handle ?? undefined}
+                      isOwn={Boolean(comment.author.handle) && comment.author.handle === displayHandle(user)}
+                    />
+                  </View>
                 </View>
                 <ThemedText variant="callout">{comment.body}</ThemedText>
               </View>

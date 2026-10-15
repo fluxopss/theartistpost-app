@@ -3,13 +3,14 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Share, View } from "react-native";
 
-import { useAuth } from "@/auth";
+import { displayHandle, useAuth } from "@/auth";
 import { originUrl } from "@/api/client";
 import { isApiError } from "@/api/errors";
 import { useLikeStatus, usePost, useToggleLike } from "@/api/hooks";
 import type { PostDetailDTO } from "@/api/types";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
+import { ContentActionsMenu } from "@/components/content-actions-menu";
 import { EmptyState } from "@/components/empty-state";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
@@ -152,6 +153,11 @@ function PostBody({ post }: { post: PostDetailDTO }) {
           variant="secondary"
           onPress={() => sharePost(post, webUrl)}
           style={{ flex: 1 }}
+        />
+        <ContentActionsMenu
+          target={{ type: "POST", id: post.id }}
+          authorHandle={post.artist.handle}
+          isOwn={displayHandle(user) === post.artist.handle}
         />
       </View>
 

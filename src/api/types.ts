@@ -39,7 +39,7 @@ export type PostSummaryDTO = {
 export type CommentDTO = {
   id: string;
   body: string;
-  author: { name: string; handle?: string | null };
+  author: { name: string; handle?: string | null; avatarUrl?: string | null };
   createdAt: string;
 };
 
@@ -104,6 +104,16 @@ export type MeDTO = {
     handle: string | null;
     image: string | null;
     artist: { handle: string; approved: boolean; pendingApproval: boolean } | null;
+    bio: string | null;
+    headline: string | null;
+    location: string | null;
+    chapterId: string | null;
+    topics: TopicDTO[];
+    termsAcceptedAt: string | null;
+    suspended: boolean;
+    followerCount: number;
+    followingCount: number;
+    unreadNotifications: number;
   };
   canPublish: boolean;
   permissions: { publish: boolean; admin: boolean };
@@ -136,3 +146,128 @@ export type InvolveInput = {
   website?: string;
   platform: "ios" | "android";
 };
+
+/* ---------- Community v1 (contract: theartistpost docs/superpowers/plans/2026-10-14-community-v1.md) ---------- */
+
+export type TopicDTO = { slug: string; name: string; kind: "genre" | "community" };
+
+export type PersonSummaryDTO = {
+  id: string;
+  handle: string;
+  name: string;
+  avatarUrl: string | null;
+  headline: string | null;
+  isArtist: boolean;
+  viewerFollows: boolean;
+};
+
+export type PersonDTO = PersonSummaryDTO & {
+  bio: string | null;
+  location: string | null;
+  chapter: { id: string; name: string } | null;
+  topics: TopicDTO[];
+  followerCount: number;
+  followingCount: number;
+  communityPostCount: number;
+  followsViewer: boolean;
+  isSelf: boolean;
+  artist: { handle: string; approved: boolean } | null;
+  joinedAt: string;
+};
+
+export type CommunityKind = "SHOUTOUT" | "COLLAB" | "SHOWING" | "ASK" | "KINDNESS" | "UPDATE";
+
+export type CommunityPostDTO = {
+  id: string;
+  kind: CommunityKind;
+  body: string;
+  imageUrl: string | null;
+  topic: TopicDTO | null;
+  parentId: string | null;
+  author: { handle: string; name: string; avatarUrl: string | null; isArtist: boolean };
+  supportCount: number;
+  replyCount: number;
+  viewerSupported: boolean;
+  canDelete: boolean;
+  createdAt: string;
+};
+
+export type NotificationType = "FOLLOW" | "LIKE" | "COMMENT" | "REPLY" | "SUPPORT" | "MENTION";
+
+export type NotificationDTO = {
+  id: string;
+  type: NotificationType;
+  actor: { handle: string; name: string; avatarUrl: string | null } | null;
+  target:
+    | { kind: "post"; slug: string }
+    | { kind: "community"; id: string }
+    | { kind: "person"; handle: string }
+    | null;
+  preview: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export type ReportReason =
+  | "spam"
+  | "harassment"
+  | "hate"
+  | "sexual"
+  | "violence"
+  | "self_harm"
+  | "impersonation"
+  | "other";
+
+export type ReportTargetType = "POST" | "COMMENT" | "COMMUNITY_POST" | "USER";
+
+export type ReportDTO = {
+  id: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  note: string | null;
+  status: "OPEN" | "ACTIONED" | "DISMISSED";
+  reportCount: number;
+  preview: string | null;
+  reporter: { handle: string | null; name: string };
+  createdAt: string;
+};
+
+export type Page<T> = { items: T[]; nextCursor: string | null };
+
+export type ReportStatus = ReportDTO["status"];
+
+export type NotificationPageDTO = Page<NotificationDTO> & { unreadCount: number };
+
+export type CommunityThreadDTO = { post: CommunityPostDTO; replies: CommunityPostDTO[] };
+
+/** PATCH /me — any subset. `topicSlugs` holds at most 8 slugs. */
+export type ProfileUpdateInput = {
+  name?: string;
+  handle?: string;
+  bio?: string | null;
+  headline?: string | null;
+  location?: string | null;
+  chapterId?: string | null;
+  topicSlugs?: string[];
+};
+
+export type CommunityPostInput = {
+  kind: CommunityKind;
+  body: string;
+  topicSlug?: string;
+  imageUrl?: string;
+  parentId?: string;
+};
+
+export type ReportInput = {
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  note?: string;
+};
+
+export type ReportAction = "hide" | "dismiss" | "suspend_user";
+
+/** Local file part for multipart uploads (appended under field `file`). */
+export type UploadFile = { uri: string; name: string; type: string };

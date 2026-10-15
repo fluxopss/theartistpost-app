@@ -54,6 +54,8 @@ export const iconMap = {
   external: { sf: "arrow.up.right.square", md: "open-in-new" },
   sparkle: { sf: "sparkle", md: "auto-awesome" },
   wifiOff: { sf: "wifi.slash", md: "wifi-off" },
+  bell: { sf: "bell", md: "notifications-none" },
+  more: { sf: "ellipsis", md: "more-horiz" },
 } as const satisfies Record<
   string,
   { sf: SymbolViewProps["name"]; md: MaterialName }

@@ -1,10 +1,12 @@
 import { router, useFocusEffect } from "expo-router";
 import { setStatusBarStyle } from "expo-status-bar";
 import { useCallback } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, View } from "react-native";
 import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
 
 import { useFeaturedNight } from "@/api/hooks";
+import { ActivityBell } from "@/components/activity-bell";
 import { Button } from "@/components/button";
 import { DoorCard } from "@/components/door-card";
 import { GenreRail } from "@/components/genre-rail";
@@ -31,6 +33,7 @@ export function HomeScreen() {
   const palette = useBrandColors();
   const night = useFeaturedNight();
   const reduceMotion = useReducedMotion();
+  const insets = useSafeAreaInsets();
 
   // The stage band is always navy, so the status bar is light while Home is up.
   useFocusEffect(
@@ -41,6 +44,7 @@ export function HomeScreen() {
   );
 
   return (
+    <View style={{ flex: 1 }}>
     <ScreenScroll
       inset={0}
       gap={0}
@@ -142,5 +146,10 @@ export function HomeScreen() {
         </View>
       </Animated.View>
     </ScreenScroll>
+    {/* The bell floats over the always-navy stage band. */}
+    <View style={{ position: "absolute", top: insets.top, right: screenMargin - spacing.xs }}>
+      <ActivityBell onStage />
+    </View>
+    </View>
   );
 }

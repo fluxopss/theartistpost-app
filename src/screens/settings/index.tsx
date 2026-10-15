@@ -1,5 +1,6 @@
 import { router, Stack } from "expo-router";
 
+import { useMe } from "@/api/hooks";
 import { useAuth } from "@/auth";
 import { ListGroup, ListRow } from "@/components/list-row";
 import { ScreenScroll } from "@/components/screen-scroll";
@@ -7,6 +8,8 @@ import { ScreenScroll } from "@/components/screen-scroll";
 import { AboutAppGroup } from "./about-app-group";
 import { AccountProfileGroup } from "./account-profile-group";
 import { AppearanceGroup } from "./appearance-group";
+import { BlockedGroup } from "./blocked-group";
+import { DeleteAccountGroup } from "./delete-account-group";
 import { DeviceDataGroup } from "./device-data-group";
 import { StudioFields } from "./studio-fields";
 
@@ -15,6 +18,8 @@ import { StudioFields } from "./studio-fields";
  */
 export function SettingsScreen() {
   const { user, signOut, gate } = useAuth();
+  const me = useMe(Boolean(user));
+  const isAdmin = me.data?.permissions.admin === true;
 
   return (
     <>
@@ -35,6 +40,14 @@ export function SettingsScreen() {
                 }
                 showChevron={false}
               />
+              {isAdmin ? (
+                <ListRow
+                  icon="flag"
+                  title="Moderation"
+                  subtitle="Open reports from the community"
+                  onPress={() => router.push("/moderation")}
+                />
+              ) : null}
               <ListRow
                 icon="close"
                 title="Sign out"
@@ -54,9 +67,11 @@ export function SettingsScreen() {
           )}
         </ListGroup>
         <AccountProfileGroup />
+        <BlockedGroup />
         <StudioFields />
         <AppearanceGroup />
         <DeviceDataGroup />
+        <DeleteAccountGroup />
         <AboutAppGroup />
       </ScreenScroll>
     </>

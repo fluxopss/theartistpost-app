@@ -1,9 +1,10 @@
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
+import { FilterChips } from "@/components/filter-chips";
 import { FramedImage } from "@/components/framed-image";
 import { ListGroup, ListRow } from "@/components/list-row";
 import { ScreenScroll } from "@/components/screen-scroll";
@@ -16,7 +17,6 @@ import { spacing } from "@/theme";
 import { brandImages } from "@/utils/brand-images";
 import { contact } from "@/utils/links";
 
-import { FilterChips } from "./filter-chips";
 import { NoteWall } from "./note-wall";
 
 export function KindnessScreen() {
@@ -29,6 +29,8 @@ export function KindnessScreen() {
   const compose = () => router.push("/compose-kindness");
 
   return (
+    <>
+    <Stack.Screen options={{ title: "Kindness", headerLargeTitleEnabled: process.env.EXPO_OS === "ios" }} />
     <ScreenScroll>
       <View style={{ gap: spacing.md }}>
         <FramedImage
@@ -114,5 +116,6 @@ export function KindnessScreen() {
         </ListGroup>
       </View>
     </ScreenScroll>
+    </>
   );
 }

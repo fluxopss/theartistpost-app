@@ -83,7 +83,8 @@ export function JoinScreen() {
       setError(result.error);
       return;
     }
-    finish("member");
+    // New members go straight to Welcome: Guidelines, handle, topics, photo.
+    router.replace("/welcome");
   };
 
   const submitArtist = async () => {
@@ -106,7 +107,7 @@ export function JoinScreen() {
       setError(result.error);
       return;
     }
-    finish(result.pendingApproval ? "artist_pending" : "artist");
+    router.replace("/welcome");
   };
 
   const sendCode = async () => {

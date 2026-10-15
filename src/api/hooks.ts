@@ -1,3 +1,4 @@
+import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "./client";
@@ -18,6 +19,21 @@ import type {
   RsvpInput,
   RsvpResult,
   TagDTO,
+  Page,
+  PersonDTO,
+  PersonSummaryDTO,
+  ProfileUpdateInput,
+  UploadFile,
+  CommunityKind,
+  CommunityPostDTO,
+  CommunityPostInput,
+  CommunityThreadDTO,
+  NotificationPageDTO,
+  ReportAction,
+  ReportDTO,
+  ReportInput,
+  ReportStatus,
+  TopicDTO,
 } from "./types";
 
 export const queryKeys = {
@@ -32,6 +48,20 @@ export const queryKeys = {
   artistTimeline: (handle: string) => ["artist", handle, "timeline"] as const,
   tags: ["tags"] as const,
   me: ["me"] as const,
+  topics: ["topics"] as const,
+  person: (handle: string) => ["person", handle] as const,
+  personFollowers: (handle: string) => ["person", handle, "followers"] as const,
+  personFollowing: (handle: string) => ["person", handle, "following"] as const,
+  personCommunity: (handle: string) => ["person", handle, "community"] as const,
+  people: (q: string, topic: string) => ["people", "list", q, topic] as const,
+  suggestedPeople: ["people", "suggested"] as const,
+  followingFeed: ["feed", "following"] as const,
+  communityList: (scope: string, topic?: string, kind?: string) =>
+    ["community", "list", scope, topic ?? "all", kind ?? "all"] as const,
+  communityThread: (id: string) => ["community", "thread", id] as const,
+  notifications: ["notifications"] as const,
+  blocks: ["blocks"] as const,
+  adminReports: (status: string) => ["admin", "reports", status] as const,
 };
 
 export function useEvents() {
@@ -226,5 +256,449 @@ export function useSubscribe() {
   return useMutation({
     mutationFn: (input: { email: string; platform: "ios" | "android" }) =>
       api.post<AcceptedResult>("/subscribe", input),
+  });
+}
+
+/* ---------- Community v1 ---------- */
+
+type MeUser = MeDTO["user"];
+type ListSnapshot = [readonly unknown[], unknown];
+
+/** Applies a change to the signed-in user's cached profile, when it is cached. */
+function patchMeUser(client: QueryClient, patch: (user: MeUser) => MeUser) {
+  client.setQueryData<MeDTO>(queryKeys.me, (prev) => (prev ? { ...prev, user: patch(prev.user) } : prev));
+}
+
+/** Works on a single page, an infinite-query result, or a plain array. */
+function mapPeople(data: unknown, fn: (person: PersonSummaryDTO) => PersonSummaryDTO): unknown {
+  if (!data || typeof data !== "object") return data;
+  if (Array.isArray(data)) return (data as PersonSummaryDTO[]).map(fn);
+  if ("pages" in data) {
+    const infinite = data as InfiniteData<Page<PersonSummaryDTO>>;
+    return { ...infinite, pages: infinite.pages.map((page) => ({ ...page, items: page.items.map(fn) })) };
+  }
+  if ("items" in data) {
+    const page = data as Page<PersonSummaryDTO>;
+    return { ...page, items: page.items.map(fn) };
+  }
+  return data;
+}
+
+/** Same shape handling for community posts; a thread carries `post` + `replies`. */
+function mapCommunityPosts(data: unknown, fn: (post: CommunityPostDTO) => CommunityPostDTO): unknown {
+  if (!data || typeof data !== "object") return data;
+  if ("pages" in data) {
+    const infinite = data as InfiniteData<Page<CommunityPostDTO>>;
+    return { ...infinite, pages: infinite.pages.map((page) => ({ ...page, items: page.items.map(fn) })) };
+  }
+  if ("replies" in data) {
+    const thread = data as CommunityThreadDTO;
+    return { post: fn(thread.post), replies: thread.replies.map(fn) };
+  }
+  if ("items" in data) {
+    const page = data as Page<CommunityPostDTO>;
+    return { ...page, items: page.items.map(fn) };
+  }
+  return data;
+}
+
+/** Person lists whose rows show `viewerFollows` (directory, suggestions, followers, following). */
+function isFollowAffected(query: { queryKey: readonly unknown[] }): boolean {
+  const key = query.queryKey;
+  if (key[0] === "people") return true;
+  return key[0] === "person" && (key[2] === "followers" || key[2] === "following");
+}
+
+function invalidateAfterBlockChange(client: QueryClient) {
+  const keys = [["people"], ["person"], ["community"], ["post"], ["feed"], ["blocks"], ["me"], ["notifications"]];
+  for (const queryKey of keys) void client.invalidateQueries({ queryKey });
+}
+
+export function useTopics() {
+  return useQuery({
+    queryKey: queryKeys.topics,
+    queryFn: ({ signal }) => api.get<TopicDTO[]>("/topics", signal),
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
+export function useUpdateProfile() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ProfileUpdateInput) => api.patch<MeDTO>("/me", input),
+    onSuccess: (data) => {
+      client.setQueryData(queryKeys.me, data);
+      void client.invalidateQueries({ queryKey: ["person"] });
+      void client.invalidateQueries({ queryKey: ["people"] });
+    },
+  });
+}
+
+export function useUploadAvatar() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (file: UploadFile) =>
+      api.upload<{ avatarUrl: string }>("/me/avatar", { uri: file.uri, name: file.name, mimeType: file.type }),
+    onSuccess: ({ avatarUrl }) => {
+      patchMeUser(client, (user) => ({ ...user, image: avatarUrl }));
+      void client.invalidateQueries({ queryKey: ["person"] });
+      void client.invalidateQueries({ queryKey: ["people"] });
+    },
+  });
+}
+
+export function useAcceptTerms() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<{ termsAcceptedAt: string }>("/me/terms", { accept: true }),
+    onSuccess: ({ termsAcceptedAt }) => {
+      patchMeUser(client, (user) => ({ ...user, termsAcceptedAt }));
+    },
+  });
+}
+
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: () => api.delete<{ deleted: true }>("/me", { confirm: "DELETE" }),
+  });
+}
+
+export type PeopleParams = { q?: string; topic?: string };
+
+/** Directory search. `q` needs 2+ characters; shorter input stays idle. */
+export function usePeople(params: PeopleParams) {
+  const q = params.q?.trim() ?? "";
+  const topic = params.topic ?? "";
+  return useInfiniteQuery({
+    queryKey: queryKeys.people(q, topic),
+    initialPageParam: null as string | null,
+    enabled: q.length === 0 || q.length >= 2,
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams({ take: "20" });
+      if (q) search.set("q", q);
+      if (topic) search.set("topic", topic);
+      if (pageParam) search.set("cursor", pageParam);
+      return api.get<Page<PersonSummaryDTO>>(`/people?${search}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
+  });
+}
+
+/** Member-only: people who share a topic with you and you do not follow yet. */
+export function useSuggestedPeople(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.suggestedPeople,
+    queryFn: ({ signal }) => api.get<Page<PersonSummaryDTO>>("/people?suggested=1", signal),
+    enabled,
+    retry: false,
+  });
+}
+
+export function usePerson(handle: string) {
+  return useQuery({
+    queryKey: queryKeys.person(handle),
+    queryFn: ({ signal }) => api.get<PersonDTO>(`/people/${encodeURIComponent(handle)}`, signal),
+    enabled: Boolean(handle),
+  });
+}
+
+type FollowResult = { following: boolean; followerCount: number };
+
+export function useToggleFollow(handle: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<FollowResult>(`/people/${encodeURIComponent(handle)}/follow`, {}),
+    onMutate: async () => {
+      await client.cancelQueries({ predicate: isFollowAffected });
+      await client.cancelQueries({ queryKey: queryKeys.person(handle) });
+      await client.cancelQueries({ queryKey: queryKeys.me });
+
+      const previousPerson = client.getQueryData<PersonDTO>(queryKeys.person(handle));
+      const previousMe = client.getQueryData<MeDTO>(queryKeys.me);
+      const previousLists = client.getQueriesData<unknown>({ predicate: isFollowAffected }) as ListSnapshot[];
+
+      const nextFollowing = !(previousPerson?.viewerFollows === true);
+      const delta = nextFollowing ? 1 : -1;
+
+      client.setQueryData<PersonDTO>(queryKeys.person(handle), (prev) =>
+        prev
+          ? { ...prev, viewerFollows: nextFollowing, followerCount: Math.max(0, prev.followerCount + delta) }
+          : prev,
+      );
+      client.setQueriesData<unknown>({ predicate: isFollowAffected }, (data: unknown) =>
+        mapPeople(data, (person) => (person.handle === handle ? { ...person, viewerFollows: nextFollowing } : person)),
+      );
+      patchMeUser(client, (user) => ({ ...user, followingCount: Math.max(0, user.followingCount + delta) }));
+
+      return { previousPerson, previousMe, previousLists };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousPerson !== undefined) {
+        client.setQueryData(queryKeys.person(handle), context.previousPerson);
+      }
+      if (context?.previousMe !== undefined) {
+        client.setQueryData(queryKeys.me, context.previousMe);
+      }
+      for (const [key, data] of context?.previousLists ?? []) {
+        client.setQueryData(key, data);
+      }
+    },
+    onSuccess: (data) => {
+      client.setQueryData<PersonDTO>(queryKeys.person(handle), (prev) =>
+        prev ? { ...prev, viewerFollows: data.following, followerCount: data.followerCount } : prev,
+      );
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.person(handle) });
+      void client.invalidateQueries({ predicate: isFollowAffected });
+      void client.invalidateQueries({ queryKey: queryKeys.followingFeed });
+      void client.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
+
+function usePersonSummaryList(handle: string, list: "followers" | "following", key: readonly unknown[]) {
+  return useInfiniteQuery({
+    queryKey: key,
+    initialPageParam: null as string | null,
+    enabled: Boolean(handle),
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams({ take: "20" });
+      if (pageParam) search.set("cursor", pageParam);
+      return api.get<Page<PersonSummaryDTO>>(
+        `/people/${encodeURIComponent(handle)}/${list}?${search}`,
+        signal,
+      );
+    },
+    getNextPageParam: (last) => last.nextCursor,
+  });
+}
+
+export function useFollowers(handle: string) {
+  return usePersonSummaryList(handle, "followers", queryKeys.personFollowers(handle));
+}
+
+export function useFollowing(handle: string) {
+  return usePersonSummaryList(handle, "following", queryKeys.personFollowing(handle));
+}
+
+export function usePersonCommunity(handle: string) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.personCommunity(handle),
+    initialPageParam: null as string | null,
+    enabled: Boolean(handle),
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams();
+      if (pageParam) search.set("cursor", pageParam);
+      const qs = search.toString();
+      return api.get<Page<CommunityPostDTO>>(
+        `/people/${encodeURIComponent(handle)}/community${qs ? `?${qs}` : ""}`,
+        signal,
+      );
+    },
+    getNextPageParam: (last) => last.nextCursor,
+  });
+}
+
+/** Posts from people you follow. Member only; the server answers 401 to guests. */
+export function useFollowingFeed() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.followingFeed,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam, signal }) => {
+      const params = new URLSearchParams({ kind: "following", take: "12" });
+      if (pageParam) params.set("cursor", pageParam);
+      return api.get<FeedPageDTO>(`/feed?${params}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
+    retry: false,
+  });
+}
+
+export type CommunityParams = {
+  scope: "all" | "following";
+  topic?: string;
+  kind?: CommunityKind;
+};
+
+/** `enabled` lets the Following scope stay idle for signed-out visitors. */
+export function useCommunity(params: CommunityParams, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.communityList(params.scope, params.topic, params.kind),
+    initialPageParam: null as string | null,
+    enabled,
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams({ scope: params.scope, take: "20" });
+      if (params.topic) search.set("topic", params.topic);
+      if (params.kind) search.set("kind", params.kind);
+      if (pageParam) search.set("cursor", pageParam);
+      return api.get<Page<CommunityPostDTO>>(`/community?${search}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
+  });
+}
+
+export function useCommunityThread(id: string) {
+  return useQuery({
+    queryKey: queryKeys.communityThread(id),
+    queryFn: ({ signal }) => api.get<CommunityThreadDTO>(`/community/${encodeURIComponent(id)}`, signal),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCreateCommunityPost() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CommunityPostInput) => api.post<CommunityPostDTO>("/community", input),
+    onSuccess: (post) => {
+      void client.invalidateQueries({ queryKey: ["community", "list"] });
+      void client.invalidateQueries({ queryKey: queryKeys.personCommunity(post.author.handle) });
+      if (post.parentId) {
+        void client.invalidateQueries({ queryKey: queryKeys.communityThread(post.parentId) });
+      }
+    },
+  });
+}
+
+export function useUploadCommunityImage() {
+  return useMutation({
+    mutationFn: (file: UploadFile) =>
+      api.upload<{ url: string }>("/community/media", { uri: file.uri, name: file.name, mimeType: file.type }),
+  });
+}
+
+export function useDeleteCommunityPost() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete<{ deleted: true }>(`/community/${encodeURIComponent(id)}`),
+    onSuccess: (_result, id) => {
+      client.removeQueries({ queryKey: queryKeys.communityThread(id) });
+      void client.invalidateQueries({ queryKey: ["community"] });
+      void client.invalidateQueries({ queryKey: ["person"] });
+    },
+  });
+}
+
+type SupportResult = { supported: boolean; supportCount: number };
+
+export function useToggleSupport(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<SupportResult>(`/community/${encodeURIComponent(id)}/support`, {}),
+    onMutate: async () => {
+      await client.cancelQueries({ queryKey: ["community"] });
+      const previousLists = client.getQueriesData<unknown>({ queryKey: ["community"] }) as ListSnapshot[];
+      client.setQueriesData<unknown>({ queryKey: ["community"] }, (data: unknown) =>
+        mapCommunityPosts(data, (post) =>
+          post.id === id
+            ? {
+                ...post,
+                viewerSupported: !post.viewerSupported,
+                supportCount: Math.max(0, post.supportCount + (post.viewerSupported ? -1 : 1)),
+              }
+            : post,
+        ),
+      );
+      return { previousLists };
+    },
+    onError: (_err, _vars, context) => {
+      for (const [key, data] of context?.previousLists ?? []) {
+        client.setQueryData(key, data);
+      }
+    },
+    onSuccess: (result) => {
+      client.setQueriesData<unknown>({ queryKey: ["community"] }, (data: unknown) =>
+        mapCommunityPosts(data, (post) =>
+          post.id === id
+            ? { ...post, viewerSupported: result.supported, supportCount: result.supportCount }
+            : post,
+        ),
+      );
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ["community"] });
+    },
+  });
+}
+
+export function useNotifications() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.notifications,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams();
+      if (pageParam) search.set("cursor", pageParam);
+      const qs = search.toString();
+      return api.get<NotificationPageDTO>(`/notifications${qs ? `?${qs}` : ""}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
+  });
+}
+
+/** Pass ids to mark specific rows read; omit to mark everything read. */
+export function useMarkNotificationsRead() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (ids?: string[]) =>
+      api.post<{ unreadCount: number }>("/notifications/read", ids ? { ids } : {}),
+    onSuccess: ({ unreadCount }) => {
+      patchMeUser(client, (user) => ({ ...user, unreadNotifications: unreadCount }));
+      void client.invalidateQueries({ queryKey: queryKeys.notifications });
+    },
+  });
+}
+
+export function useBlocks() {
+  return useQuery({
+    queryKey: queryKeys.blocks,
+    queryFn: ({ signal }) => api.get<PersonSummaryDTO[]>("/blocks", signal),
+  });
+}
+
+export function useBlock() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (handle: string) => api.post<{ blocked: true }>("/blocks", { handle }),
+    onSuccess: () => invalidateAfterBlockChange(client),
+  });
+}
+
+export function useUnblock() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (handle: string) => api.delete<{ blocked: false }>(`/blocks/${encodeURIComponent(handle)}`),
+    onSuccess: () => invalidateAfterBlockChange(client),
+  });
+}
+
+export function useReport() {
+  return useMutation({
+    mutationFn: (input: ReportInput) => api.post<{ id: string }>("/reports", input),
+  });
+}
+
+export function useAdminReports(status: ReportStatus = "OPEN") {
+  return useInfiniteQuery({
+    queryKey: queryKeys.adminReports(status),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam, signal }) => {
+      const params = new URLSearchParams({ status });
+      if (pageParam) params.set("cursor", pageParam);
+      return api.get<Page<ReportDTO>>(`/admin/reports?${params}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
+  });
+}
+
+export function useActOnReport() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action, reason }: { id: string; action: ReportAction; reason?: string }) =>
+      api.patch<ReportDTO>(`/admin/reports/${encodeURIComponent(id)}`, { action, reason }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["admin", "reports"] });
+      void client.invalidateQueries({ queryKey: ["community"] });
+      void client.invalidateQueries({ queryKey: ["post"] });
+    },
   });
 }

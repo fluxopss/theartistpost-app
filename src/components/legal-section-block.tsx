@@ -4,7 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import type { LegalSection } from "@/content/legal";
 import { spacing } from "@/theme";
 
-import { LegalLink } from "./legal-link";
+import { LegalLink } from "@/components/legal-link";
 
 /** "Lead. Rest" → the bold lead-in the web set in <strong>, and the rest. */
 function splitLeadIn(text: string) {

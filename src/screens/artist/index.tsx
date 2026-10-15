@@ -4,12 +4,13 @@ import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 
 import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
-import { useArtistTimeline } from "@/api/hooks";
+import { useArtistTimeline, usePerson } from "@/api/hooks";
 import type { ArtistProfileDTO, PostSummaryDTO } from "@/api/types";
 import { ArtistAvatar } from "@/components/artist-avatar";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
+import { FollowButton } from "@/components/follow-button";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { SectionHeader } from "@/components/section-header";
 import { Skeleton } from "@/components/skeleton";
@@ -41,6 +42,8 @@ function ArtistSkeleton() {
 }
 
 function ProfileHeader({ artist }: { artist: ArtistProfileDTO & { postCount?: number } }) {
+  // The artist's community profile (same handle): follow state and the link to it.
+  const person = usePerson(artist.handle);
   const count = artist.postCount;
   const worksLabel =
     count === undefined
@@ -70,6 +73,20 @@ function ProfileHeader({ artist }: { artist: ArtistProfileDTO & { postCount?: nu
       ) : null}
 
       <SocialLinks links={artist.socialLinks} />
+
+      {person.data ? (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          {person.data.isSelf ? null : (
+            <FollowButton handle={person.data.handle} following={person.data.viewerFollows} />
+          )}
+          <Button
+            title="Community profile"
+            variant="secondary"
+            icon="people"
+            onPress={() => router.push({ pathname: "/person/[handle]", params: { handle: artist.handle } })}
+          />
+        </View>
+      ) : null}
 
       <SectionHeader eyebrow={worksLabel} eyebrowTone="spark-coral" title="Timeline" />
     </View>

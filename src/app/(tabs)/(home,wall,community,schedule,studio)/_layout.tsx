@@ -15,17 +15,17 @@ import { fonts, useBrandColors } from "@/theme";
 export const unstable_settings = {
   home: { anchor: "index" },
   wall: { anchor: "wall" },
+  community: { anchor: "community" },
   schedule: { anchor: "schedule" },
-  kindness: { anchor: "kindness" },
   studio: { anchor: "studio" },
 };
 
 const anchorTitles: Record<string, string> = {
   home: "Home",
   wall: "The Wall",
+  community: "Community",
   schedule: "Schedule",
-  kindness: "Kindness",
-  studio: "Studio",
+  studio: "You",
 };
 
 const ios = process.env.EXPO_OS === "ios";

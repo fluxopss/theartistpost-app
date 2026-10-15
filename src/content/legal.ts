@@ -10,7 +10,7 @@
  */
 import { links, site } from "./site";
 
-export type LegalDocId = "privacy" | "terms" | "support";
+export type LegalDocId = "privacy" | "terms" | "guidelines" | "support";
 
 export type LegalContact = "email" | "call" | "directions";
 
@@ -137,6 +137,62 @@ export const legalDocs: Record<LegalDocId, LegalDoc> = {
     contact: ["email"],
   },
 
+  guidelines: {
+    kicker: "Community",
+    title: "Community Guidelines",
+    updated: null,
+    sections: [
+      {
+        body: [
+          "The Artist Post is a community for artists, makers and neighbors. These guidelines cover the community board, Wall notes, replies, and profiles.",
+        ],
+      },
+      {
+        heading: "Be kind",
+        body: [
+          "Lift others up. Shout-outs, collab calls, kindness notes, and honest questions are welcome. Disagree with work without attacking the person who made it.",
+        ],
+      },
+      {
+        heading: "Not allowed",
+        list: "bullets",
+        body: [
+          "Harassment, bullying, or threats",
+          "Hate or discrimination",
+          "Sexual content",
+          "Spam, scams, or promotion dressed up as community",
+          "Impersonating another person or an organization",
+          "Anything you don’t have the right to share",
+        ],
+      },
+      {
+        heading: "Credit the artist",
+        body: [
+          "When you share someone’s work, credit them. Don’t present another artist’s work as your own.",
+        ],
+      },
+      {
+        heading: "Report, don’t retaliate",
+        body: [
+          "Use Report on anything that breaks these guidelines. Don’t argue in the comments or try to get even.",
+        ],
+      },
+      {
+        heading: "What happens next",
+        body: [
+          "The house team reviews reports within 24 hours. We may hide content, close reports, or suspend an account. A suspended account can still delete itself.",
+        ],
+      },
+      {
+        heading: "Artists never pay to take part",
+        body: [
+          "Posting on the community board, joining, and showing your work cost nothing.",
+        ],
+      },
+    ],
+    contact: ["email"],
+  },
+
   support: {
     kicker: "Help",
     title: "Support",
@@ -181,5 +237,5 @@ export const legalDocs: Record<LegalDocId, LegalDoc> = {
 };
 
 export function isLegalDocId(value: unknown): value is LegalDocId {
-  return value === "privacy" || value === "terms" || value === "support";
+  return value === "privacy" || value === "terms" || value === "guidelines" || value === "support";
 }

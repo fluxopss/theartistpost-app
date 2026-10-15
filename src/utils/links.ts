@@ -12,9 +12,11 @@ import { links, site } from "@/content/site";
 export const tabRoutes = {
   home: "/(tabs)/(home)",
   wall: "/(tabs)/(wall)/wall",
+  community: "/(tabs)/(community)/community",
   schedule: "/(tabs)/(schedule)/schedule",
-  kindness: "/(tabs)/(kindness)/kindness",
   studio: "/(tabs)/(studio)/studio",
+  /** Kindness moved into Community: a pushed screen, not a tab. */
+  kindness: "/kindness",
 } as const;
 
 const webToNative: Record<string, Href> = {
