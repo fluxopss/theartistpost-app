@@ -1,4 +1,5 @@
 import type { Reaction, ReactionCounts } from "@/domain/community/reactions";
+import type { PaymentLinkDTO } from "@/domain/payments/payment-links";
 
 /** Wire types for /api/v1 — mirror of theartistpost `src/server/api` DTOs. */
 
@@ -76,6 +77,8 @@ export type ArtistProfileDTO = {
   bio: string | null;
   avatarUrl: string | null;
   socialLinks: Record<string, string> | null;
+  /** Link-out payment usernames; absent from older servers. */
+  paymentLinks?: PaymentLinkDTO[];
   postCount?: number;
 };
 
@@ -115,6 +118,10 @@ export type MeDTO = {
     headline: string | null;
     location: string | null;
     chapterId: string | null;
+    /** "Get paid directly" usernames, bare (no @ or $); absent from older servers. */
+    venmoUsername?: string | null;
+    cashAppTag?: string | null;
+    paypalMeUsername?: string | null;
     topics: TopicDTO[];
     termsAcceptedAt: string | null;
     suspended: boolean;
@@ -179,6 +186,7 @@ export type PersonDTO = PersonSummaryDTO & {
   followsViewer: boolean;
   isSelf: boolean;
   artist: { handle: string; approved: boolean } | null;
+  paymentLinks?: PaymentLinkDTO[];
   joinedAt: string;
 };
 
@@ -279,6 +287,9 @@ export type ProfileUpdateInput = {
   location?: string | null;
   chapterId?: string | null;
   topicSlugs?: string[];
+  venmoUsername?: string | null;
+  cashAppTag?: string | null;
+  paypalMeUsername?: string | null;
 };
 
 export type CommunityPostInput = {

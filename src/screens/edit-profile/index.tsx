@@ -15,6 +15,12 @@ import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { TopicPicker } from "@/components/topic-picker";
 import { useAuth } from "@/auth";
+import {
+  canListPaymentUsernames,
+  PAYMENT_FIELDS,
+  PAYMENT_HELPER,
+  PAYMENT_INPUT_MAX,
+} from "@/domain/payments/payment-links";
 import { clearProfileDraft, readProfileDraft, rememberProfileDraft } from "@/domain/people/draft-store";
 import {
   BIO_MAX,
@@ -38,6 +44,9 @@ function toFormValues(user: MeDTO["user"], profile: MeDTO["profile"]): ProfileFo
     bio: user.bio ?? profile?.bio ?? "",
     chapterId: user.chapterId,
     topicSlugs: user.topics.map((topic) => topic.slug),
+    venmoUsername: user.venmoUsername ?? "",
+    cashAppTag: user.cashAppTag ?? "",
+    paypalMeUsername: user.paypalMeUsername ?? "",
   };
 }
 
@@ -52,6 +61,8 @@ function EditProfileForm({ me }: { me: MeDTO }) {
 
   // Artists keep the handle that is their Wall address; the server refuses a change.
   const handleLocked = Boolean(me.user.artist?.handle);
+  // "Get paid directly" is an artist feature; the server refuses it for members.
+  const paymentsEnabled = canListPaymentUsernames(me.user.role);
   const set = <K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) =>
     setValues((prev) => {
       const next = { ...prev, [key]: value };
@@ -60,7 +71,7 @@ function EditProfileForm({ me }: { me: MeDTO }) {
     });
 
   const save = async () => {
-    const checked = validateProfileForm(values, { handleLocked });
+    const checked = validateProfileForm(values, { handleLocked, paymentsEnabled });
     if (!checked.ok) {
       setErrors(checked.fields);
       setFormError(null);
@@ -68,7 +79,7 @@ function EditProfileForm({ me }: { me: MeDTO }) {
     }
     setErrors({});
     setFormError(null);
-    const patch = buildProfilePatch(original, values, { handleLocked });
+    const patch = buildProfilePatch(original, values, { handleLocked, paymentsEnabled });
     if (Object.keys(patch).length === 0) {
       clearProfileDraft(me.user.id);
       router.back();
@@ -159,6 +170,35 @@ function EditProfileForm({ me }: { me: MeDTO }) {
         <ThemedText variant="footnote" tone="danger">
           {errors.topicSlugs}
         </ThemedText>
+      ) : null}
+
+      {paymentsEnabled ? (
+        <View style={{ gap: spacing.md }}>
+          <View style={{ gap: spacing.xxs }}>
+            <ThemedText variant="eyebrow" tone="muted">
+              Optional
+            </ThemedText>
+            <ThemedText variant="title3" accessibilityRole="header">
+              Get paid directly
+            </ThemedText>
+            <ThemedText variant="footnote" tone="muted">
+              {PAYMENT_HELPER}
+            </ThemedText>
+          </View>
+          {PAYMENT_FIELDS.map((field) => (
+            <TextField
+              key={field.key}
+              label={field.label}
+              value={values[field.key]}
+              onChangeText={(text) => set(field.key, text)}
+              placeholder={field.placeholder}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={PAYMENT_INPUT_MAX}
+              error={errors[field.key]}
+            />
+          ))}
+        </View>
       ) : null}
 
       {formError ? (

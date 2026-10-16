@@ -11,6 +11,7 @@ import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
 import { FollowButton } from "@/components/follow-button";
+import { PaymentLinkChips } from "@/components/payment-link-chips";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { SectionHeader } from "@/components/section-header";
 import { Skeleton } from "@/components/skeleton";
@@ -73,6 +74,8 @@ function ProfileHeader({ artist }: { artist: ArtistProfileDTO & { postCount?: nu
       ) : null}
 
       <SocialLinks links={artist.socialLinks} />
+
+      <PaymentLinkChips links={artist.paymentLinks} name={artist.name} handle={artist.handle} />
 
       {person.data ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
