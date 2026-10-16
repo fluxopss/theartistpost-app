@@ -133,6 +133,8 @@ export default function RootLayout() {
                     headerShown: false,
                   }}
                 />
+                <Stack.Screen name="manage-people" options={{ headerShown: true, title: "People" }} />
+                <Stack.Screen name="manage-person/[id]" options={{ headerShown: true, title: "Member" }} />
                 <Stack.Screen
                   name="note/[id]"
                   options={{

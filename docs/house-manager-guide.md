@@ -1,6 +1,6 @@
 # House Manager Guide
 
-For Robbie. This explains the admin tools in The Artist Post app: approving artists, handling reports, and what members see.
+For Robbie. This explains the admin tools in The Artist Post app: looking after people, approving artists, handling reports, and what members see.
 
 Items marked **Ask Jonathan** are not decided in the app yet. Check them before you act on them.
 
@@ -8,18 +8,74 @@ Items marked **Ask Jonathan** are not decided in the app yet. Check them before 
 
 ## What your admin pass lets you do
 
-You see a **Manage the house** group in Settings. It has two tools:
+You see a **Manage the house** group in Settings. It has three tools:
 
+- **People**: find anyone in the house, see what they have done, and look after their account.
 - **Artist requests**: approve or revoke artists.
 - **Moderation**: review reports from members.
 
 Things to know:
 
-- You can't suspend yourself or another admin from the queue.
+- You can't suspend yourself or another admin from the queue or from People.
 - You can't delete accounts from the app. Members delete their own accounts (see below).
 - Keep your admin account to yourself.
 
 If you don't see **Manage the house**, your account isn't set as an admin. Ask Jonathan.
+
+---
+
+## Looking after people
+
+Open **Settings → Manage the house → People**. This is where you go when you need to find someone, check what has happened to their account, or help them.
+
+### Finding someone
+
+1. Type in the search box. You can search by **name**, **@handle**, or **email**. Results update after a short pause.
+2. Narrow the list with the pills under the search box:
+   - **Role**: Everyone, Members, Artists, or Admins.
+   - **Status**: Any status, Active, or Suspended.
+   - **Artist approval**: All artists, or **Waiting for approval** (artists who asked to publish and haven't been approved yet).
+3. Each row shows their name, @handle, role, and the day they joined. A row also says **Suspended** or **Waiting for approval** when that applies.
+4. If the list has more than one page, tap **Show more**.
+
+Emails show only to admins. Nobody else in the app can see them.
+
+### What you see on a person
+
+Tap a row to open the person. The page shows:
+
+- Who they are: name, @handle, role, email, when they joined, and whether they accepted the Community Guidelines.
+- A red **Suspended** box if their account is paused, with the date, who did it, and why.
+- How active they have been: works, Wall notes, community posts, who they follow, who follows them, and how many reports they filed and how many are about them.
+- The most recent things they posted. Anything hidden says **Hidden**.
+- **History**: everything an admin has done to this account, with the date, who did it, and the reason they gave.
+
+### What you can do
+
+Under **What you can do**, tap an action. The app tells you what it will do, then asks **Why?** Write a short reason (a few words is fine, up to 200 characters). The reason is saved in the history, so the next person to look can see why.
+
+| Action | What it does |
+|---|---|
+| **Make a member / artist / admin** | Changes their role. You can only make someone an artist if they applied through the artist door. |
+| **Approve as artist / Revoke artist approval** | Lets them publish to The Wall, or takes that away. This is the same as Artist requests. |
+| **Suspend** | They can still sign in and read, but can't post, comment, or like. |
+| **Lift suspension** | Gives them those back. |
+| **Email a sign-in code** | Sends a one-time code to their email so they can get back in. You never see the code. |
+
+Some buttons are missing on purpose:
+
+- You can't remove your own admin role, and you can't suspend yourself.
+- You can't suspend another admin. Change their role first.
+- You can't demote the last admin. There must always be someone who can look after the house.
+- The house's own sample identities aren't managed here.
+
+### Signing someone out of their phone
+
+There is no **sign out everywhere** button yet. Sessions live on each phone, and the app has no way for the house to cancel them from here. If an account was taken over, **Suspend** it (it stops all posting right away), then **Email a sign-in code** to the real owner once you've confirmed who they are. **Ask Jonathan** about adding a true sign-out button.
+
+### From a report to the person
+
+On a card in **Moderation**, tap **See [name]** to open that person's page. You'll see their history before you decide.
 
 ---
 
@@ -46,6 +102,7 @@ Only **open** reports appear there. Each card shows what was reported, the reaso
    - **Hide** (Wall works, Wall notes, and community posts only): the item disappears for everyone else right away. Its reports close. Use it for content that breaks the Community Guidelines.
    - **Dismiss** (every report): nothing new is removed and the reports close. If the house had hidden a community post or a Wall note automatically, Dismiss brings it back.
    - **Suspend** (every report): the person can't post, comment, or like anymore. They can still sign in, read, and delete their own account. Suspend also hides the reported item and closes its reports.
+   - **See [name]** (when the reported item has an owner): opens their page in People so you can read their history first.
    - **Profile reports** have no Hide button. For a profile, choose **Suspend** or **Dismiss**.
 3. Confirm the action. Once it's done, the card leaves the queue.
 
@@ -89,7 +146,7 @@ Blocking is for members. You don't need to block anyone to moderate.
 
   **Ask Jonathan** how email deletion requests are carried out before you promise anyone a date.
 
-- Don't delete an account to settle a dispute. Use **Suspend** instead.
+- Don't delete an account to settle a dispute. Use **Suspend** instead (from **People** or a report).
 
 ---
 
@@ -116,6 +173,7 @@ Members can post to the Community board without being approved. Approval only co
 ## First week checklist
 
 - [ ] Sign in with your admin email and check that **Manage the house** appears in Settings.
+- [ ] Open **People**, search for yourself and for one member, and look at the history on a page.
 - [ ] Review every pending artist request. Approve or revoke each one, with the confirm step.
 - [ ] Open the Moderation queue and clear what is open. Aim for 24 hours.
 - [x] Community Guidelines approved as written (2026-10-15).

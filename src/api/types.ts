@@ -397,6 +397,8 @@ export type ReportDTO = {
   reportCount: number;
   preview: string | null;
   reporter: { handle: string | null; name: string };
+  /** Who owns the reported thing (the person for profile reports); null once it is gone. */
+  owner: { id: string; name: string; handle: string | null } | null;
   createdAt: string;
 };
 
@@ -465,4 +467,68 @@ export type AdminUserDTO = AdminUserRowDTO & {
 export type AdminUserUpdateInput = {
   role?: "VIEWER" | "ARTIST" | "ADMIN";
   artistApproved?: boolean;
+};
+
+/* ---------- Admin: people ---------- */
+
+/** One row from GET /api/v1/admin/users (the People list). Admin-only; carries the email. */
+export type AdminPersonRowDTO = AdminUserRowDTO & {
+  avatarUrl: string | null;
+  suspended: boolean;
+};
+
+export type AdminPersonCountsDTO = {
+  posts: number;
+  comments: number;
+  communityPosts: number;
+  following: number;
+  followers: number;
+  reportsFiled: number;
+  reportsReceived: number;
+};
+
+export type AdminPersonActivityDTO = {
+  kind: "post" | "comment" | "community_post";
+  id: string;
+  text: string | null;
+  hidden: boolean;
+  createdAt: string;
+};
+
+export type AdminPersonAuditDTO = {
+  id: string;
+  action: string;
+  reason: string | null;
+  change: { from: string; to: string } | null;
+  actor: { id: string; name: string; handle: string | null } | null;
+  createdAt: string;
+};
+
+/** GET /api/v1/admin/users/[id]. */
+export type AdminPersonDetailDTO = {
+  user: AdminPersonRowDTO & {
+    bio: string | null;
+    headline: string | null;
+    location: string | null;
+    artistBio: string | null;
+    termsAcceptedAt: string | null;
+    suspendedAt: string | null;
+    suspension: { reason: string | null; by: string | null; at: string } | null;
+    updatedAt: string;
+  };
+  counts: AdminPersonCountsDTO;
+  recentActivity: AdminPersonActivityDTO[];
+  audit: AdminPersonAuditDTO[];
+};
+
+export type AdminRole = "VIEWER" | "ARTIST" | "ADMIN";
+
+/** Body of POST /api/v1/admin/users/[id]/actions. `reason` is required by the server. */
+export type AdminPersonActionInput =
+  | { action: "set_role"; role: AdminRole; reason: string }
+  | { action: "approve_artist" | "revoke_artist" | "suspend" | "unsuspend" | "send_sign_in_help"; reason: string };
+
+export type AdminPersonActionResult = {
+  action: AdminPersonActionInput["action"];
+  user: AdminPersonRowDTO;
 };

@@ -16,14 +16,12 @@
       "url": "https://u.expo.dev/874b50c8-20fc-4610-8c1f-f9c1c0aba065"
     },
     "ios": {
-      "bundleIdentifier": "agency.fluxlab.theartistpost.dev",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "agency.fluxlab.theartistpost.dev",
       "adaptiveIcon": {
         "backgroundColor": "#071A2E",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

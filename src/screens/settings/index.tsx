@@ -4,6 +4,7 @@ import { useMe } from "@/api/hooks";
 import { useAuth } from "@/auth";
 import { ListGroup, ListRow } from "@/components/list-row";
 import { ScreenScroll } from "@/components/screen-scroll";
+import { isHouseAdmin } from "@/domain/admin/access";
 
 import { AboutAppGroup } from "./about-app-group";
 import { AccountProfileGroup } from "./account-profile-group";
@@ -19,7 +20,7 @@ import { StudioFields } from "./studio-fields";
 export function SettingsScreen() {
   const { user, signOut, gate } = useAuth();
   const me = useMe(Boolean(user));
-  const isAdmin = me.data?.permissions.admin === true;
+  const isAdmin = isHouseAdmin(Boolean(user), me.data?.permissions);
 
   return (
     <>
@@ -60,6 +61,12 @@ export function SettingsScreen() {
         </ListGroup>
         {isAdmin ? (
           <ListGroup header="Manage the house" footer="Only house admins see this group.">
+            <ListRow
+              icon="people"
+              title="People"
+              subtitle="Find a member, see their history, manage their access"
+              onPress={() => router.push("/manage-people")}
+            />
             <ListRow
               icon="studio"
               title="Artist requests"
