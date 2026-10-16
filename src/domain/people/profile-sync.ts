@@ -17,6 +17,14 @@ export function queryKeysToRefreshAfterProfileUpdate(input: ProfileUpdateInput):
     add(["community"]);
     add(["feed"]);
   }
+  // The artist's Wall page shows their payment chips.
+  if (
+    input.venmoUsername !== undefined ||
+    input.cashAppTag !== undefined ||
+    input.paypalMeUsername !== undefined
+  ) {
+    add(["artist"]);
+  }
   if (input.name !== undefined || input.handle !== undefined) {
     add(["community"]);
     add(["post"]);
@@ -31,6 +39,10 @@ export type SyncedProfile = {
   handle: string | null;
   chapterId: string | null;
   topics: readonly { slug: string }[];
+  /** Absent on servers that predate payment usernames. */
+  venmoUsername?: string | null;
+  cashAppTag?: string | null;
+  paypalMeUsername?: string | null;
 };
 
 /**
@@ -48,5 +60,10 @@ export function profileChangeFromServer(prev: SyncedProfile, next: SyncedProfile
   if (prev.chapterId !== next.chapterId) change.chapterId = next.chapterId;
   if (prev.name !== next.name) change.name = next.name;
   if (prev.handle !== next.handle && next.handle) change.handle = next.handle;
+  for (const key of ["venmoUsername", "cashAppTag", "paypalMeUsername"] as const) {
+    const was = prev[key] ?? null;
+    const now = next[key] ?? null;
+    if (was !== now) change[key] = now;
+  }
   return change;
 }

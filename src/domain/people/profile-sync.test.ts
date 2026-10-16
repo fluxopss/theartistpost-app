@@ -26,6 +26,17 @@ describe("profileChangeFromServer", () => {
     expect(profileChangeFromServer(base, { ...base, handle: "vera2" })).toEqual({ handle: "vera2" });
   });
 
+  it("reports a payment username changed on another device", () => {
+    const before = { ...base, venmoUsername: null, cashAppTag: "robbieart", paypalMeUsername: null };
+    expect(profileChangeFromServer(before, { ...before })).toEqual({});
+    expect(profileChangeFromServer(before, { ...before, venmoUsername: "robbie-art", cashAppTag: null })).toEqual({
+      venmoUsername: "robbie-art",
+      cashAppTag: null,
+    });
+    // Older servers do not send the fields at all: never a change.
+    expect(profileChangeFromServer(base, { ...base })).toEqual({});
+  });
+
   it("a change made on another device refreshes the board and feeds through the same keys", () => {
     const change = profileChangeFromServer(base, { ...base, topics: [{ slug: "dance" }] });
     const keys = queryKeysToRefreshAfterProfileUpdate(change).map((key) => key[0]);
@@ -65,6 +76,15 @@ describe("queryKeysToRefreshAfterProfileUpdate", () => {
     expect(has(keys, "community")).toBe(true);
     expect(has(keys, "post")).toBe(true);
     expect(has(keys, "notifications")).toBe(true);
+  });
+
+  it("changing a payment username refreshes the artist page that shows the chips", () => {
+    for (const input of [{ venmoUsername: "robbie-art" }, { cashAppTag: null }, { paypalMeUsername: "robbieart" }]) {
+      const keys = queryKeysToRefreshAfterProfileUpdate(input);
+      expect(has(keys, "artist")).toBe(true);
+      expect(has(keys, "person")).toBe(true);
+    }
+    expect(has(queryKeysToRefreshAfterProfileUpdate({ bio: "Hi" }), "artist")).toBe(false);
   });
 
   it("lists each key once", () => {

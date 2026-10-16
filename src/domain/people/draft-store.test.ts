@@ -10,6 +10,9 @@ const values: ProfileFormValues = {
   bio: "Typed but never saved",
   chapterId: null,
   topicSlugs: ["music"],
+  venmoUsername: "",
+  cashAppTag: "",
+  paypalMeUsername: "",
 };
 
 afterEach(() => {

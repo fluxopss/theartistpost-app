@@ -10,6 +10,7 @@ import { CommunityCard } from "@/components/community-card";
 import { ContentActionsMenu } from "@/components/content-actions-menu";
 import { EmptyState } from "@/components/empty-state";
 import { FollowButton } from "@/components/follow-button";
+import { PaymentLinkChips } from "@/components/payment-link-chips";
 import { ProfileHeader } from "@/components/profile-header";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
@@ -95,6 +96,7 @@ function PersonBody({ person }: { person: PersonDTO }) {
           postCount={person.communityPostCount}
         />
         <TopicPills topics={person.topics} />
+        <PaymentLinkChips links={person.paymentLinks} name={person.name} handle={person.handle} />
         <View style={{ gap: spacing.sm }}>
           {person.isSelf ? (
             <Button title="Edit profile" icon="pencil" variant="secondary" onPress={() => router.push("/edit-profile")} />

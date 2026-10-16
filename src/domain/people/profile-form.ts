@@ -1,5 +1,7 @@
 import type { ProfileUpdateInput } from "@/api/types";
 
+import { PAYMENT_FIELDS, parsePaymentUsername } from "@/domain/payments/payment-links";
+
 import { validateHandle } from "./handle";
 
 export const NAME_MIN = 2;
@@ -17,11 +19,17 @@ export type ProfileFormValues = {
   bio: string;
   chapterId: string | null;
   topicSlugs: string[];
+  /** "Get paid directly" usernames, as typed. Artists only. */
+  venmoUsername: string;
+  cashAppTag: string;
+  paypalMeUsername: string;
 };
 
 type Options = {
   /** Artists keep their Wall handle; the server rejects any change. */
   handleLocked: boolean;
+  /** The "Get paid directly" section is shown (artists and admins). */
+  paymentsEnabled?: boolean;
 };
 
 export type ProfileValidation = { ok: true } | { ok: false; fields: Record<string, string> };
@@ -42,6 +50,13 @@ export function validateProfileForm(values: ProfileFormValues, options: Options)
   if (values.location.trim().length > LOCATION_MAX) fields.location = `Keep it under ${LOCATION_MAX} characters.`;
   if (values.bio.trim().length > BIO_MAX) fields.bio = `Keep it under ${BIO_MAX} characters.`;
   if (values.topicSlugs.length > TOPICS_MAX) fields.topicSlugs = `Pick up to ${TOPICS_MAX} topics.`;
+
+  if (options.paymentsEnabled) {
+    for (const field of PAYMENT_FIELDS) {
+      const checked = parsePaymentUsername(field.service, values[field.key]);
+      if (!checked.ok) fields[field.key] = checked.message;
+    }
+  }
 
   return Object.keys(fields).length > 0 ? { ok: false, fields } : { ok: true };
 }
@@ -79,6 +94,17 @@ export function buildProfilePatch(
 
   if (next.chapterId !== original.chapterId) patch.chapterId = next.chapterId;
   if (!sameSet(original.topicSlugs, next.topicSlugs)) patch.topicSlugs = next.topicSlugs;
+
+  if (options.paymentsEnabled) {
+    for (const field of PAYMENT_FIELDS) {
+      const before = parsePaymentUsername(field.service, original[field.key]);
+      const after = parsePaymentUsername(field.service, next[field.key]);
+      // Invalid text never gets here: validateProfileForm blocks the save.
+      if (!after.ok) continue;
+      const beforeValue = before.ok ? before.value : original[field.key].trim() || null;
+      if (after.value !== beforeValue) patch[field.key] = after.value;
+    }
+  }
 
   return patch;
 }
