@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { Alert, View } from "react-native";
 
 import { isApiError } from "@/api/errors";
@@ -181,6 +181,16 @@ function ReportCard({
         <ThemedText variant="footnote" tone="muted" selectable>
           Reporter’s note: {report.note}
         </ThemedText>
+      ) : null}
+      {report.owner ? (
+        <Button
+          title={`See ${report.owner.name}`}
+          variant="ghost"
+          icon="people"
+          accessibilityLabel={`See ${report.owner.name}${report.owner.handle ? `, @${report.owner.handle}` : ""} in People`}
+          accessibilityHint="Opens their history and the actions you can take"
+          onPress={() => router.push({ pathname: "/manage-person/[id]", params: { id: report.owner?.id ?? "" } })}
+        />
       ) : null}
       <View style={{ flexDirection: "row", gap: spacing.xs, flexWrap: "wrap" }}>
         {moderationActionsFor(report.targetType).map((action) => (

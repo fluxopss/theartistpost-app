@@ -48,6 +48,10 @@ import type {
   AdminUserRowDTO,
   AdminUserDTO,
   AdminUserUpdateInput,
+  AdminPersonActionInput,
+  AdminPersonActionResult,
+  AdminPersonDetailDTO,
+  AdminPersonRowDTO,
 } from "./types";
 
 export const queryKeys = {
@@ -77,6 +81,8 @@ export const queryKeys = {
   blocks: ["blocks"] as const,
   adminReports: (status: string) => ["admin", "reports", status] as const,
   adminUsers: (pendingOnly: boolean) => ["admin", "users", pendingOnly ? "pending" : "all"] as const,
+  adminPeople: (params: Record<string, string>) => ["admin", "users", "people", params] as const,
+  adminPerson: (id: string) => ["admin", "person", id] as const,
 };
 
 export function useEvents() {
@@ -821,6 +827,49 @@ export function useUpdateAdminUser() {
       void client.invalidateQueries({ queryKey: ["admin", "users"] });
       void client.invalidateQueries({ queryKey: ["people"] });
       void client.invalidateQueries({ queryKey: ["person"] });
+    },
+  });
+}
+
+/* ---------- Admin: people ---------- */
+
+/** Admin People list: server-side search and filters, cursor paged. */
+export function useAdminPeople(params: Record<string, string>, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.adminPeople(params),
+    enabled,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam, signal }) => {
+      const search = new URLSearchParams({ take: "24", ...params });
+      if (pageParam) search.set("cursor", pageParam);
+      return api.get<Page<AdminPersonRowDTO>>(`/admin/users?${search}`, signal);
+    },
+    getNextPageParam: (last) => last.nextCursor,
+    retry: false,
+  });
+}
+
+/** One person as an admin sees them: profile, counts, activity, audit history. */
+export function useAdminPerson(id: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.adminPerson(id),
+    enabled: enabled && id.length > 0,
+    queryFn: ({ signal }) => api.get<AdminPersonDetailDTO>(`/admin/users/${encodeURIComponent(id)}`, signal),
+    retry: false,
+  });
+}
+
+/** One audited admin action. Waits for the server; no optimistic update. */
+export function useAdminPersonAction() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string } & AdminPersonActionInput) =>
+      api.post<AdminPersonActionResult>(`/admin/users/${encodeURIComponent(id)}/actions`, body),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["admin"] });
+      void client.invalidateQueries({ queryKey: ["people"] });
+      void client.invalidateQueries({ queryKey: ["person"] });
+      void client.invalidateQueries({ queryKey: ["community"] });
     },
   });
 }
