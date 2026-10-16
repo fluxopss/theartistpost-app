@@ -1,13 +1,15 @@
+import { useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
-import { useEvent, useFeaturedNight } from "@/api/hooks";
+import { refreshEventQueries, useEvent, useFeaturedNight } from "@/api/hooks";
 import type { EventDTO } from "@/api/types";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
+import { FramedImage } from "@/components/framed-image";
 import { ListGroup, ListRow } from "@/components/list-row";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
@@ -17,6 +19,9 @@ import { formatNightWhen, nightPhase, scheduleLabel } from "@/domain/night/progr
 import { useSaves } from "@/storage/saves";
 import { radius, spacing } from "@/theme";
 import { addEventToCalendar, shareEvent } from "@/utils/calendar";
+
+import { EventCheckInCard } from "./event-check-in-card";
+import { EventRsvpCard } from "./event-rsvp-card";
 import { contact, tabRoutes } from "@/utils/links";
 
 const HERO_SKELETON = 120;
@@ -25,6 +30,7 @@ const ROWS_SKELETON = 132;
 export function EventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const query = useEvent(id);
+  const client = useQueryClient();
   const notFound = isApiError(query.error) && query.error.code === "not_found";
 
   return (
@@ -32,7 +38,7 @@ export function EventScreen() {
       <ScreenScroll
         gap={spacing.xl}
         refreshing={query.isRefetching}
-        onRefresh={() => void query.refetch()}
+        onRefresh={() => void refreshEventQueries(client, id)}
       >
         {notFound ? (
           <EmptyState
@@ -82,9 +88,12 @@ function EventBody({ event }: { event: EventDTO }) {
 
   return (
     <>
+      {event.coverImageUrl ? (
+        <FramedImage source={event.coverImageUrl} alt={`Cover photo for ${event.title}`} aspectRatio={16 / 9} />
+      ) : null}
       <View style={{ gap: spacing.xs }}>
-        <ThemedText variant="eyebrow" tone={phase === "live" ? "success" : "spark-gold"}>
-          {scheduleLabel(event)}
+        <ThemedText variant="eyebrow" tone={phase === "live" && !event.cancelled ? "success" : "spark-gold"}>
+          {event.cancelled ? "Cancelled" : scheduleLabel(event)}
         </ThemedText>
         <ThemedText variant="title1" accessibilityRole="header">
           {event.title}
@@ -96,7 +105,16 @@ function EventBody({ event }: { event: EventDTO }) {
         ) : null}
       </View>
 
-      {isFeatured ? (
+      {event.cancelled ? (
+        <ThemedText variant="subheadline" tone="danger" accessibilityRole="alert">
+          This night has been cancelled. We’re sorry — check the schedule for what’s next.
+        </ThemedText>
+      ) : null}
+
+      {event.source === "db" ? <EventRsvpCard event={event} /> : null}
+      {event.source === "db" ? <EventCheckInCard event={event} /> : null}
+
+      {isFeatured && event.source !== "db" ? (
         <Button
           title={copy.night.hold}
           tone="coral"
@@ -116,8 +134,8 @@ function EventBody({ event }: { event: EventDTO }) {
         <ListRow
           icon="mapPin"
           title={event.venue}
-          subtitle={site.address.full}
-          onPress={contact.directions}
+          subtitle={event.venueAddress ?? site.address.full}
+          onPress={() => contact.directions(event.venueAddress)}
           external
           separator={Boolean(event.medium)}
         />
@@ -132,14 +150,14 @@ function EventBody({ event }: { event: EventDTO }) {
         </ThemedText>
       ) : null}
 
-      {phase === "closed" ? (
+      {phase === "closed" && !event.cancelled ? (
         <ThemedText variant="footnote" tone="muted">
           This night has passed. Keep an eye on the schedule for the next one.
         </ThemedText>
       ) : null}
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
-        {phase !== "closed" ? (
+        {phase !== "closed" && !event.cancelled ? (
           <Button
             title="Add to Calendar"
             variant="secondary"

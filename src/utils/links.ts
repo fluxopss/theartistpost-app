@@ -68,8 +68,11 @@ export const contact = {
   call: () => Linking.openURL(`tel:${site.phoneTel}`),
   email: (subject?: string) =>
     Linking.openURL(`mailto:${site.email}${subject ? `?subject=${encodeURIComponent(subject)}` : ""}`),
-  directions: () => {
-    const q = encodeURIComponent(site.address.full);
+  /** Directions to a night's venue; the house itself when no address is given. */
+  directions: (address?: unknown) => {
+    // Also used directly as an onPress handler, which passes an event object.
+    const where = typeof address === "string" ? address.trim() : "";
+    const q = encodeURIComponent(where || site.address.full);
     const url = process.env.EXPO_OS === "ios" ? `maps:0,0?q=${q}` : `geo:0,0?q=${q}`;
     Linking.openURL(url).catch(() => Linking.openURL(site.mapsUrl));
   },

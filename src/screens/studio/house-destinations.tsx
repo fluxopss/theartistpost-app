@@ -20,6 +20,12 @@ export function HouseDestinations() {
         onPress={() => router.push("/night")}
       />
       <ListRow
+        icon="schedule"
+        title="My nights"
+        subtitle="Seats you’ve held"
+        onPress={() => router.push("/my-nights")}
+      />
+      <ListRow
         icon="door"
         title="Get Involved"
         subtitle="Showcase, partner, volunteer, give"

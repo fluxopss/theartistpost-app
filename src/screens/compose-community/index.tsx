@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -34,8 +34,12 @@ export function ComposeCommunityScreen() {
   const create = useCreateCommunityPost();
   const upload = useUploadCommunityImage();
 
-  const [kind, setKind] = useState<CommunityKind>("SHOUTOUT");
-  const [body, setBody] = useState("");
+  // Other screens can hand over a starting kind and text (e.g. “Checked in at …”).
+  const params = useLocalSearchParams<{ kind?: string; body?: string }>();
+  const startKind = COMMUNITY_KINDS.find((k) => k.id === params.kind)?.id ?? "SHOUTOUT";
+
+  const [kind, setKind] = useState<CommunityKind>(startKind);
+  const [body, setBody] = useState(() => (typeof params.body === "string" ? params.body.slice(0, COMMUNITY_BODY_MAX) : ""));
   const [topic, setTopic] = useState<string | null>(null);
   const [photo, setPhoto] = useState<PickedImage | null>(null);
   const [error, setError] = useState<string | null>(null);

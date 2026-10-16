@@ -74,6 +74,12 @@ export function SettingsScreen() {
               onPress={() => router.push("/artist-requests")}
             />
             <ListRow
+              icon="schedule"
+              title="Manage events"
+              subtitle="Create nights, seats, check-ins and attendees"
+              onPress={() => router.push("/manage-events")}
+            />
+            <ListRow
               icon="flag"
               title="Moderation"
               subtitle="Open reports from the community"

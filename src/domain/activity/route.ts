@@ -13,6 +13,8 @@ export function notificationHref(target: NotificationDTO["target"]): string | nu
       return `/community/${encodeURIComponent(target.id)}`;
     case "person":
       return `/person/${encodeURIComponent(target.handle)}`;
+    case "event":
+      return `/event/${encodeURIComponent(target.id)}`;
     default:
       return null;
   }

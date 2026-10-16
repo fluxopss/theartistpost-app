@@ -14,7 +14,146 @@ export type EventDTO = {
   venue: string;
   description: string;
   comingSoon: boolean;
+  /** Where the night is in time. A cancelled night is always "closed". */
   status: EventStatus;
+  /** "db" = managed by the house (server RSVPs and check-ins); "content" = seed schedule. */
+  source: "db" | "content";
+  cancelled: boolean;
+  timeZone: string;
+  venueAddress: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  /** Total seats; null = unlimited. */
+  capacity: number | null;
+  coverImageUrl: string | null;
+};
+
+export type RsvpStatus = "GOING" | "MAYBE" | "NOT_GOING";
+
+export type EventRsvpDTO = {
+  eventId: string;
+  status: RsvpStatus;
+  party: number;
+  note: string | null;
+  /** True while a GOING answer is waiting for a seat. */
+  waitlisted: boolean;
+  passCode: string;
+  updatedAt: string;
+};
+
+export type SeatSummaryDTO = {
+  capacity: number | null;
+  seatsTaken: number;
+  seatsLeft: number | null;
+  waitlisted: number;
+};
+
+export type MyRsvpDTO = { rsvp: EventRsvpDTO | null; summary: SeatSummaryDTO };
+export type SetRsvpInput = { status: RsvpStatus; party?: number; note?: string | null };
+export type SetRsvpResult = { rsvp: EventRsvpDTO; summary: SeatSummaryDTO; event: EventDTO };
+export type MyRsvpItemDTO = { rsvp: EventRsvpDTO; event: EventDTO };
+
+export type CheckInWindow = "before" | "open" | "after";
+export type CheckInStateDTO = {
+  checkIn: { checkedInAt: string; verified: boolean } | null;
+  window: CheckInWindow;
+  opensAt: string;
+  /** Whether the venue has a point to verify against. */
+  venueHasLocation: boolean;
+};
+/** One optional reading, used once by the server and never stored. */
+export type CheckInInput = { lat?: number; lng?: number; accuracyM?: number | null };
+
+export type AdminEventCounts = {
+  going: number;
+  goingSeats: number;
+  waitlisted: number;
+  maybe: number;
+  notGoing: number;
+  checkedIn: number;
+  verified: number;
+};
+
+export type AdminEventDTO = {
+  id: string;
+  sourceId: string | null;
+  title: string;
+  description: string;
+  artist: string;
+  medium: string;
+  startsAt: string;
+  endsAt: string;
+  /** House wall time, ready to edit ("2026-10-30T18:00"). */
+  startsAtLocal: string;
+  endsAtLocal: string;
+  timeZone: string;
+  venueName: string;
+  venueAddress: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  capacity: number | null;
+  publishState: "DRAFT" | "PUBLISHED" | "CANCELLED";
+  coverImageUrl: string | null;
+  comingSoon: boolean;
+  publishedAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  counts: AdminEventCounts;
+};
+
+export type AdminEventListDTO = {
+  items: AdminEventDTO[];
+  fromSchedule: { id: string; title: string; start: string; end: string; venue: string }[];
+};
+
+/** Create/update body. Times are house wall time ("2026-10-30T18:00"). */
+export type AdminEventInput = {
+  title: string;
+  description?: string;
+  startsAt: string;
+  endsAt: string;
+  venueName: string;
+  venueAddress?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  capacity?: number | null;
+  coverImageUrl?: string | null;
+  sourceId?: string;
+};
+
+export type AttendeeDTO = {
+  userId: string;
+  name: string;
+  email: string;
+  status: RsvpStatus;
+  party: number;
+  waitlisted: boolean;
+  note: string | null;
+  rsvpAt: string;
+  checkedIn: boolean;
+  verified: boolean;
+  checkedInAt: string | null;
+};
+
+export type AttendeeListDTO = {
+  items: AttendeeDTO[];
+  totals: {
+    goingPeople: number;
+    goingSeats: number;
+    waitlistedPeople: number;
+    waitlistedSeats: number;
+    maybe: number;
+    notGoing: number;
+    checkedIn: number;
+    verified: number;
+  };
+};
+
+export type CheckInListDTO = {
+  items: { userId: string; name: string; handle: string | null; checkedInAt: string; verified: boolean }[];
+  count: number;
+  verifiedCount: number;
 };
 
 export type FeaturedNightDTO = {
@@ -219,7 +358,7 @@ export type ReactionResultDTO = {
   supported: boolean;
 };
 
-export type NotificationType = "FOLLOW" | "LIKE" | "COMMENT" | "REPLY" | "SUPPORT" | "MENTION";
+export type NotificationType = "FOLLOW" | "LIKE" | "COMMENT" | "REPLY" | "SUPPORT" | "MENTION" | "EVENT";
 
 export type NotificationDTO = {
   id: string;
@@ -229,6 +368,7 @@ export type NotificationDTO = {
     | { kind: "post"; slug: string }
     | { kind: "community"; id: string }
     | { kind: "person"; handle: string }
+    | { kind: "event"; id: string }
     | null;
   preview: string | null;
   readAt: string | null;
