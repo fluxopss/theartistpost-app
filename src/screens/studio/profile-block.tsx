@@ -1,16 +1,20 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import { Share, View } from "react-native";
 
-import { useMe } from "@/api/hooks";
+import { useMe, useUpdateProfile } from "@/api/hooks";
 import { useAuth } from "@/auth";
 import { Button } from "@/components/button";
+import { InlineEditField } from "@/components/inline-edit-field";
 import { ProfileHeader } from "@/components/profile-header";
 import { Skeleton } from "@/components/skeleton";
 import { StatRow } from "@/components/stat-row";
 import { ThemedText } from "@/components/themed-text";
 import { TopicPills } from "@/components/topic-pills";
 import { chapters } from "@/content/chapters";
+import { BIO_MAX, HEADLINE_MAX } from "@/domain/people/profile-form";
 import { needsWelcome } from "@/domain/people/welcome";
+import { useAvatarChange } from "@/hooks/use-avatar-change";
 import { profileShareMessage, profileShareUrl } from "@/domain/people/share";
 import { spacing } from "@/theme";
 
@@ -18,6 +22,16 @@ import { spacing } from "@/theme";
 export function ProfileBlock() {
   const { user } = useAuth();
   const me = useMe(Boolean(user));
+  const update = useUpdateProfile();
+  const avatar = useAvatarChange();
+
+  // Coming back to this tab shows what you (or another device) changed since.
+  const refetchMe = me.refetch;
+  useFocusEffect(
+    useCallback(() => {
+      if (user) void refetchMe();
+    }, [user, refetchMe]),
+  );
 
   if (!user) return null;
   if (!me.data) return me.isPending ? <Skeleton height={160} /> : null;
@@ -48,6 +62,28 @@ export function ProfileBlock() {
 
   return (
     <ProfileHeader
+      onAvatarPress={() => void avatar.choose()}
+      avatarBusy={avatar.isPending}
+      headlineSlot={
+        <InlineEditField
+          label="Headline"
+          value={profile.headline}
+          emptyPrompt="Add a headline"
+          max={HEADLINE_MAX}
+          textVariant="headline"
+          onSave={(headline) => update.mutateAsync({ headline })}
+        />
+      }
+      bioSlot={
+        <InlineEditField
+          label="Bio"
+          value={profile.bio}
+          emptyPrompt="Tell people about your work"
+          max={BIO_MAX}
+          multiline
+          onSave={(bio) => update.mutateAsync({ bio })}
+        />
+      }
       profile={{
         name: profile.name,
         handle,

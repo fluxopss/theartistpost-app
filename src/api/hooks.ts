@@ -8,6 +8,7 @@ import {
   type Reaction,
   type ReactionState,
 } from "@/domain/community/reactions";
+import { profileChangeFromServer, queryKeysToRefreshAfterProfileUpdate } from "@/domain/people/profile-sync";
 
 import { api } from "./client";
 import type {
@@ -163,11 +164,29 @@ export function useArtistTimeline(handle: string) {
 }
 
 export function useMe(enabled = true) {
+  const client = useQueryClient();
   return useQuery({
     queryKey: queryKeys.me,
-    queryFn: ({ signal }) => api.get<MeDTO>("/me", signal),
+    queryFn: async ({ signal }) => {
+      const previous = client.getQueryData<MeDTO>(queryKeys.me);
+      const next = await api.get<MeDTO>("/me", signal);
+      // An edit made on another device (topics, chapter, name, handle) changes what the
+      // board, feeds and suggestions should show, so refetch them like a local edit would.
+      if (previous) {
+        const change = profileChangeFromServer(previous.user, next.user);
+        if (Object.keys(change).length > 0) {
+          for (const queryKey of queryKeysToRefreshAfterProfileUpdate(change)) {
+            void client.invalidateQueries({ queryKey });
+          }
+        }
+      }
+      return next;
+    },
     enabled,
     retry: false,
+    // The server is the source of truth: an edit made on another device shows
+    // up the next time this phone comes to the foreground after 30 seconds.
+    staleTime: 30 * 1000,
   });
 }
 
@@ -354,10 +373,13 @@ export function useUpdateProfile() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: ProfileUpdateInput) => api.patch<MeDTO>("/me", input),
-    onSuccess: (data) => {
+    onSuccess: (data, input) => {
+      // The server's answer is the source of truth for your own profile.
       client.setQueryData(queryKeys.me, data);
-      void client.invalidateQueries({ queryKey: ["person"] });
-      void client.invalidateQueries({ queryKey: ["people"] });
+      // Everything that is derived from it (For You, suggestions, author names) refetches.
+      for (const queryKey of queryKeysToRefreshAfterProfileUpdate(input)) {
+        void client.invalidateQueries({ queryKey });
+      }
     },
   });
 }
@@ -371,6 +393,9 @@ export function useUploadAvatar() {
       patchMeUser(client, (user) => ({ ...user, image: avatarUrl }));
       void client.invalidateQueries({ queryKey: ["person"] });
       void client.invalidateQueries({ queryKey: ["people"] });
+      // Your face is on every post and notification you appear in.
+      void client.invalidateQueries({ queryKey: ["community"] });
+      void client.invalidateQueries({ queryKey: queryKeys.me });
     },
   });
 }
@@ -544,7 +569,8 @@ export function useFollowingFeed() {
 }
 
 export type CommunityParams = {
-  scope: "all" | "following";
+  /** `foryou` is ranked server-side by the signed-in member's topics. */
+  scope: "all" | "following" | "foryou";
   topic?: string;
   kind?: CommunityKind;
 };

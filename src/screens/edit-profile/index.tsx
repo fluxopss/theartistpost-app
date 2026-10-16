@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-import { isApiError } from "@/api/errors";
+import { describeSaveError, isApiError } from "@/api/errors";
 import { useMe, useUpdateProfile } from "@/api/hooks";
 import type { MeDTO } from "@/api/types";
 import { AvatarPicker } from "@/components/avatar-picker";
@@ -15,6 +15,7 @@ import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { TopicPicker } from "@/components/topic-picker";
 import { useAuth } from "@/auth";
+import { clearProfileDraft, readProfileDraft, rememberProfileDraft } from "@/domain/people/draft-store";
 import {
   BIO_MAX,
   buildProfilePatch,
@@ -43,14 +44,20 @@ function toFormValues(user: MeDTO["user"], profile: MeDTO["profile"]): ProfileFo
 function EditProfileForm({ me }: { me: MeDTO }) {
   const update = useUpdateProfile();
   const original = useMemo(() => toFormValues(me.user, me.profile), [me.user, me.profile]);
-  const [values, setValues] = useState<ProfileFormValues>(original);
+  // An earlier edit that was never saved (sheet closed, or the save failed) comes back.
+  const [restored] = useState(() => readProfileDraft(me.user.id));
+  const [values, setValues] = useState<ProfileFormValues>(restored ?? original);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
   // Artists keep the handle that is their Wall address; the server refuses a change.
   const handleLocked = Boolean(me.user.artist?.handle);
   const set = <K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) =>
-    setValues((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => {
+      const next = { ...prev, [key]: value };
+      rememberProfileDraft(me.user.id, next);
+      return next;
+    });
 
   const save = async () => {
     const checked = validateProfileForm(values, { handleLocked });
@@ -63,19 +70,19 @@ function EditProfileForm({ me }: { me: MeDTO }) {
     setFormError(null);
     const patch = buildProfilePatch(original, values, { handleLocked });
     if (Object.keys(patch).length === 0) {
+      clearProfileDraft(me.user.id);
       router.back();
       return;
     }
     try {
       await update.mutateAsync(patch);
+      clearProfileDraft(me.user.id);
       router.back();
     } catch (cause) {
-      if (isApiError(cause)) {
-        setErrors(cause.fields ?? {});
-        if (!cause.fields || Object.keys(cause.fields).length === 0) setFormError(cause.message);
-      } else {
-        setFormError("Could not save just now. Your changes are still here.");
-      }
+      // Typed text stays in the form (and in the draft store) whatever went wrong.
+      const fields = isApiError(cause) ? cause.fields : undefined;
+      if (fields && Object.keys(fields).length > 0) setErrors(fields);
+      else setFormError(describeSaveError(cause));
     }
   };
 
@@ -85,6 +92,11 @@ function EditProfileForm({ me }: { me: MeDTO }) {
       bottomOffset={spacing.xxl}
       contentContainerStyle={{ padding: screenMargin, gap: spacing.lg, paddingBottom: spacing.xxxl }}
     >
+      {restored ? (
+        <ThemedText variant="footnote" tone="muted" accessibilityLiveRegion="polite">
+          Your unsaved changes are back. Save when you are ready.
+        </ThemedText>
+      ) : null}
       <AvatarPicker url={me.user.image} name={values.name || me.user.name} />
 
       <TextField

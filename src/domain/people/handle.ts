@@ -35,6 +35,17 @@ export function validateHandle(raw: string): HandleValidation {
   return { ok: true, handle };
 }
 
+/**
+ * Three nearby handles to offer when the one a member wanted is taken. Always
+ * valid and at most 40 characters; empty when the starting handle is unusable.
+ */
+export function handleAlternatives(taken: string): string[] {
+  const base = validateHandle(taken);
+  if (!base.ok) return [];
+  const suffixes = ["2", "_2", "3"];
+  return suffixes.map((suffix) => `${base.handle.slice(0, 40 - suffix.length)}${suffix}`);
+}
+
 /** A starting handle for the welcome step, derived from a display name. Empty when none fits. */
 export function suggestHandle(name: string): string {
   const folded = name

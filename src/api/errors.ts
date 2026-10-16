@@ -32,3 +32,16 @@ export class ApiError extends Error {
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }
+
+/**
+ * A sentence for a failed save that always tells the person their typing is
+ * still there, so a bad connection never feels like lost work.
+ */
+export function describeSaveError(error: unknown): string {
+  if (isApiError(error)) {
+    if (error.offline) return "You are offline. Your changes are still here, so save again when you are back.";
+    const field = error.fields ? Object.values(error.fields)[0] : undefined;
+    return field ?? error.message;
+  }
+  return "Could not save just now. Your changes are still here.";
+}
