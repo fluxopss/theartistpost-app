@@ -6,18 +6,14 @@ import { useBlock } from "@/api/hooks";
 import type { ReportTargetType } from "@/api/types";
 import { useAuth } from "@/auth";
 import { Icon } from "@/components/icon";
+import { androidAlertPage, type MenuAction } from "@/domain/app/action-menu";
 import { minTapTarget, useBrandColors } from "@/theme";
-
-type MenuAction = {
-  label: string;
-  destructive?: boolean;
-  run: () => void;
-};
 
 /**
  * The ellipsis on any piece of community content: report it, block its
  * author, or delete your own. Self-contained so any screen can mount it.
- * iOS uses an action sheet; Android uses an alert (three buttons at most).
+ * iOS uses an action sheet; Android has none, so it gets an alert that pages
+ * through the actions (an Android alert holds three buttons at most).
  */
 export function ContentActionsMenu({
   target,
@@ -115,18 +111,21 @@ export function ContentActionsMenu({
       return;
     }
 
-    Alert.alert(
-      "Actions",
-      undefined,
-      [
-        ...actions.map((a) => ({
-          text: a.label,
-          style: a.destructive ? ("destructive" as const) : ("default" as const),
-          onPress: a.run,
+    const showPage = (page: number) => {
+      Alert.alert(
+        "Actions",
+        undefined,
+        androidAlertPage(actions, page).map((button) => ({
+          text: button.text,
+          style: button.style,
+          onPress: () => {
+            if (button.pick === "more") showPage(page + 1);
+            else if (typeof button.pick === "number") actions[button.pick]?.run();
+          },
         })),
-        { text: "Cancel", style: "cancel" },
-      ],
-    );
+      );
+    };
+    showPage(0);
   };
 
   return (
