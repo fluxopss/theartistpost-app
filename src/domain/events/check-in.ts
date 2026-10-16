@@ -29,7 +29,7 @@ export function checkInUi(
 export function checkInResultLine(verified: boolean): string {
   return verified
     ? "You’re checked in — confirmed at the house."
-    : "You’re checked in — without location.";
+    : "You’re checked in — not confirmed by location.";
 }
 
 const COMMUNITY_BODY_MAX = 500;

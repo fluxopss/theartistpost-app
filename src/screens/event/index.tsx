@@ -1,9 +1,10 @@
+import { useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
-import { useEvent, useFeaturedNight } from "@/api/hooks";
+import { refreshEventQueries, useEvent, useFeaturedNight } from "@/api/hooks";
 import type { EventDTO } from "@/api/types";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
@@ -29,6 +30,7 @@ const ROWS_SKELETON = 132;
 export function EventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const query = useEvent(id);
+  const client = useQueryClient();
   const notFound = isApiError(query.error) && query.error.code === "not_found";
 
   return (
@@ -36,7 +38,7 @@ export function EventScreen() {
       <ScreenScroll
         gap={spacing.xl}
         refreshing={query.isRefetching}
-        onRefresh={() => void query.refetch()}
+        onRefresh={() => void refreshEventQueries(client, id)}
       >
         {notFound ? (
           <EmptyState

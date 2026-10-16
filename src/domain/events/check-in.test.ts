@@ -51,7 +51,7 @@ describe("checkInUi", () => {
 describe("copy", () => {
   it("states plainly what was confirmed", () => {
     expect(checkInResultLine(true)).toBe("You’re checked in — confirmed at the house.");
-    expect(checkInResultLine(false)).toBe("You’re checked in — without location.");
+    expect(checkInResultLine(false)).toBe("You’re checked in — not confirmed by location.");
   });
 
   it("writes a kind, short moment for the board", () => {

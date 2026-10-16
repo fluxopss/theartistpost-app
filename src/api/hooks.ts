@@ -847,6 +847,19 @@ export function useUpdateAdminUser() {
 
 const enc = encodeURIComponent;
 
+/**
+ * Pull-to-refresh for a night: the night itself, my RSVP and my check-in all
+ * live under `["events", id]`, so one invalidation refreshes them together
+ * (a seat the server just gave me must not stay "waitlisted" on screen).
+ */
+export function refreshEventQueries(client: QueryClient, eventId: string) {
+  return Promise.all([
+    client.invalidateQueries({ queryKey: queryKeys.event(eventId) }),
+    client.invalidateQueries({ queryKey: queryKeys.myRsvps }),
+    client.invalidateQueries({ queryKey: queryKeys.featuredNight }),
+  ]);
+}
+
 /** My answer for a night plus how full it is. Needs a signed-in member. */
 export function useMyRsvp(eventId: string, enabled = true) {
   return useQuery({
@@ -854,6 +867,8 @@ export function useMyRsvp(eventId: string, enabled = true) {
     queryFn: ({ signal }) => api.get<MyRsvpDTO>(`/events/${enc(eventId)}/rsvp`, signal),
     enabled: Boolean(eventId) && enabled,
     retry: false,
+    // A waitlisted seat can open up at any moment; keep the card honest.
+    refetchInterval: 30_000,
   });
 }
 
@@ -963,6 +978,8 @@ export function useEventAttendees(id: string, enabled = true) {
     queryKey: queryKeys.adminAttendees(id),
     queryFn: ({ signal }) => api.get<AttendeeListDTO>(`/admin/events/${enc(id)}/rsvps`, signal),
     enabled: Boolean(id) && enabled,
+    // Same cadence as the live check-in count, so the list under it agrees.
+    refetchInterval: 15_000,
   });
 }
 
