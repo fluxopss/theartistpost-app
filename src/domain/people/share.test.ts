@@ -13,3 +13,21 @@ describe("profile sharing", () => {
     );
   });
 });
+
+describe("share origin override", () => {
+  const prev = process.env.EXPO_PUBLIC_SITE_URL;
+  afterEach(() => {
+    if (prev === undefined) delete process.env.EXPO_PUBLIC_SITE_URL;
+    else process.env.EXPO_PUBLIC_SITE_URL = prev;
+  });
+
+  it("uses EXPO_PUBLIC_SITE_URL when it is a clean https origin", () => {
+    process.env.EXPO_PUBLIC_SITE_URL = "https://theartistpost.org/";
+    expect(profileShareUrl("Robbi")).toBe("https://theartistpost.org/u/robbi");
+  });
+
+  it("ignores a malformed value and keeps the default", () => {
+    process.env.EXPO_PUBLIC_SITE_URL = "javascript:alert(1)";
+    expect(profileShareUrl("robbi")).toBe("https://theartistpost.fluxlab.agency/u/robbi");
+  });
+});
