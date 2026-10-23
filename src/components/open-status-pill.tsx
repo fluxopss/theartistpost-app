@@ -11,7 +11,7 @@ export function OpenStatusPill({ tone = "default" }: { tone?: "default" | "stage
   return (
     <View
       accessible
-      accessibilityLabel={`${label}. Hours ${hoursLabel} Eastern.`}
+      accessibilityLabel={`${label}. Today ${hoursLabel} Eastern.`}
       style={{
         flexDirection: "row",
         alignItems: "center",

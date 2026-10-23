@@ -2,13 +2,13 @@ import { router } from "expo-router";
 import { ScrollView, type StyleProp, type ViewStyle } from "react-native";
 
 import { GenreSticker } from "@/components/genre-sticker";
-import { tapGenres } from "@/content/stage";
+import { houseGenres } from "@/content/stage";
 import { screenMargin, spacing } from "@/theme";
 
-export type GenreId = (typeof tapGenres)[number]["id"];
+export type GenreId = (typeof houseGenres)[number]["id"];
 
 /**
- * The seven TAP genres as a horizontal sticker rail. By default a sticker
+ * The TAP lanes (the 2016 stage + Culinary) as a horizontal sticker rail. By default a sticker
  * opens that lane on The Wall tab; pass `onSelect` to filter in place.
  */
 export function GenreRail({
@@ -25,7 +25,7 @@ export function GenreRail({
       horizontal
       showsHorizontalScrollIndicator={false}
       accessibilityRole="list"
-      accessibilityLabel="TAP genres"
+      accessibilityLabel="TAP lanes"
       style={style}
       contentContainerStyle={{
         gap: spacing.sm,
@@ -34,7 +34,7 @@ export function GenreRail({
         paddingVertical: spacing.md,
       }}
     >
-      {tapGenres.map((genre) => (
+      {houseGenres.map((genre) => (
         <GenreSticker
           key={genre.id}
           label={genre.label}

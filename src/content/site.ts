@@ -8,6 +8,24 @@
  * paths became `BrandImage` keys + `remoteImagePath`.
  */
 
+import { weeklyLabel, type DayHours, type WeeklyHours } from "@/domain/house/hours";
+
+const HOUSE_WEEKLY = [
+  { day: 0, openMinutes: 11 * 60, closeMinutes: 23 * 60 }, // Sun
+  { day: 1, openMinutes: 11 * 60, closeMinutes: 23 * 60 }, // Mon
+  { day: 2, openMinutes: 11 * 60, closeMinutes: 23 * 60 }, // Tue
+  { day: 3, openMinutes: 11 * 60, closeMinutes: 23 * 60 }, // Wed
+  { day: 4, openMinutes: 11 * 60, closeMinutes: 23 * 60 }, // Thu
+  { day: 5, openMinutes: 11 * 60, closeMinutes: 24 * 60 }, // Fri, to midnight
+  { day: 6, openMinutes: 11 * 60, closeMinutes: 24 * 60 }, // Sat, to midnight
+] as const satisfies readonly DayHours[];
+
+/** The house's weekly schedule (Eastern). */
+export const HOUSE_SCHEDULE: WeeklyHours = {
+  timeZone: "America/New_York",
+  weekly: HOUSE_WEEKLY,
+};
+
 export const site = {
   name: "The Artist Post",
   mark: "The Artist Post®",
@@ -39,13 +57,16 @@ export const site = {
   },
   mapsUrl:
     "https://www.google.com/maps/search/?api=1&query=522+Clematis+Street+West+Palm+Beach+FL",
-  hoursToday: "09:00 am – 09:30 pm",
-  /** Structured house hours (minutes after local midnight in `timeZone`). */
+  /**
+   * Official Hacienda hours (Hacienda management via Robbie, Oct 2026): Sun–Thu
+   * 11 AM – 11 PM, Fri–Sat 11 AM – midnight. Artists may stay open later.
+   * Mirrors the web's site.ts `hours`; change both together.
+   */
   hours: {
-    openMinutes: 540, // 09:00
-    closeMinutes: 1290, // 21:30
-    label: "9:00 AM – 9:30 PM",
-    timeZone: "America/New_York",
+    timeZone: HOUSE_SCHEDULE.timeZone,
+    weekly: HOUSE_SCHEDULE.weekly,
+    label: weeklyLabel(HOUSE_SCHEDULE),
+    note: "Artists are welcome to stay open later.",
   },
   copyright: "Copyright © 2026 The Artist Post Inc - All Rights Reserved.",
   founded: "2014",

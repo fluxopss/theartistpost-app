@@ -8,6 +8,7 @@ import type { GenreId } from "@/components/genre-rail";
  */
 export const laneTag: Record<GenreId, string> = {
   music: "music",
+  culinary: "culinary",
   photo: "photography",
   dance: "dance",
   film: "film",

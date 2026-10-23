@@ -7,7 +7,7 @@ import { Button } from "@/components/button";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
-import { tapGenres } from "@/content/stage";
+import { houseGenres } from "@/content/stage";
 import { artistJoinSchema, memberJoinSchema, verifySchema } from "@/domain/auth/validation";
 import { isHouseCodeComplete, normalizeOtp, resendSecondsLeft } from "@/domain/auth/code";
 import { radius, spacing, spark, stageGlow, stageLine, stageNavy, useBrandColors } from "@/theme";
@@ -15,7 +15,7 @@ import { radius, spacing, spark, stageGlow, stageLine, stageNavy, useBrandColors
 /** `start` is the member form; it is the front door, so most people never see another screen. */
 type JoinDoor = "start" | "artist" | "verify";
 
-const MEDIUMS = tapGenres.map((g) => g.label);
+const MEDIUMS = houseGenres.map((g) => g.label);
 const RESEND_COOLDOWN_MS = 30_000;
 
 /**
