@@ -39,3 +39,23 @@ export const tapGenres = [
 }[];
 
 export type TapGenre = (typeof tapGenres)[number];
+
+/**
+ * Lanes the founder has added since the 2016 pitch. `tapGenres` stays the
+ * historical record; `houseGenres` is what the house runs on today.
+ * Mirrors the web's src/content/stage.ts.
+ *
+ * Culinary Arts — Robbie Alvarez, Founder's Vision (Oct 2026): a primary
+ * category, not an afterthought. In years of TAP pop-ups, at times roughly
+ * half the vendors worked in food. Listed right after Musicians on purpose.
+ */
+export const culinaryGenre = {
+  id: "culinary",
+  label: "Culinary Artists",
+  tilt: 1.8,
+  tone: "violet",
+} as const satisfies { id: string; label: string; tilt: number; tone: TapTone };
+
+export const houseGenres = [tapGenres[0], culinaryGenre, ...tapGenres.slice(1)] as const;
+
+export type HouseGenre = (typeof houseGenres)[number];

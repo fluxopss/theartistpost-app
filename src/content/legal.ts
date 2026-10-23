@@ -200,8 +200,7 @@ export const legalDocs: Record<LegalDocId, LegalDoc> = {
     sections: [
       {
         body: [
-          // native: `site.hoursToday` ("09:00 am – 09:30 pm") → `site.hours.label`,
-          // the same hours in the app's formatting.
+          // Weekly label, e.g. "Sun–Thu 11 AM – 11 PM · Fri–Sat 11 AM – Midnight".
           `Robbie reads the inbox. Better yet, see us in person at Hacienda during posted hours (${site.hours.label}).`,
         ],
         // native: the web's Email / Call or text / Visit list became the contact

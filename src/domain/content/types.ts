@@ -13,6 +13,7 @@ export const artistMediumSchema = z.enum([
   "theater",
   "visual",
   "dance",
+  "culinary",
   "literary",
   "multidisciplinary",
 ]);
@@ -28,6 +29,7 @@ export const ARTIST_MEDIUMS: readonly {
   { value: "theater", label: "Theater" },
   { value: "visual", label: "Visual" },
   { value: "dance", label: "Dance" },
+  { value: "culinary", label: "Culinary" },
   { value: "literary", label: "Literary" },
   { value: "multidisciplinary", label: "Multi" },
 ];
