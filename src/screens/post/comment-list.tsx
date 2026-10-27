@@ -1,10 +1,10 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/auth";
 import { isApiError } from "@/api/errors";
-import { useCreateComment } from "@/api/hooks";
+import { useCreateComment, useDeleteComment } from "@/api/hooks";
 import type { PostDetailDTO } from "@/api/types";
 import { Button } from "@/components/button";
 import { ContentActionsMenu } from "@/components/content-actions-menu";
@@ -12,6 +12,7 @@ import { ListGroup } from "@/components/list-row";
 import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { isSelfHandle } from "@/domain/people/self-handle";
+import { canDeleteComment } from "@/domain/posts/comments";
 import { useSelfHandle } from "@/hooks/use-self-handle";
 import { spacing, useBrandColors } from "@/theme";
 
@@ -39,10 +40,18 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
   const { user } = useAuth();
   const selfHandle = useSelfHandle();
   const createComment = useCreateComment(post.slug);
+  const deleteComment = useDeleteComment(post.slug);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { comments } = post;
   const capped = post.commentCount > comments.length;
+
+  const removeComment = (commentId: string) => {
+    deleteComment.mutate(commentId, {
+      onError: (cause) =>
+        Alert.alert("Could not delete", isApiError(cause) ? cause.message : "Try again in a moment."),
+    });
+  };
 
   const submit = async () => {
     const trimmed = body.trim();
@@ -105,6 +114,15 @@ export function CommentList({ post }: { post: PostDetailDTO }) {
                       target={{ type: "COMMENT", id: comment.id }}
                       authorHandle={comment.author.handle ?? undefined}
                       isOwn={isSelfHandle(comment.author.handle, selfHandle)}
+                      onDelete={
+                        canDeleteComment({
+                          authorHandle: comment.author.handle,
+                          selfHandle,
+                          role: user?.role,
+                        })
+                          ? () => removeComment(comment.id)
+                          : undefined
+                      }
                     />
                   </View>
                 </View>

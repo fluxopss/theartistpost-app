@@ -9,6 +9,7 @@ import {
   type ReactionState,
 } from "@/domain/community/reactions";
 import { profileChangeFromServer, queryKeysToRefreshAfterProfileUpdate } from "@/domain/people/profile-sync";
+import { withoutComment } from "@/domain/posts/comments";
 
 import { api } from "./client";
 import type {
@@ -297,6 +298,33 @@ export function useCreateComment(slug: string) {
           comments: [comment, ...prev.comments],
         };
       });
+    },
+  });
+}
+
+/**
+ * Delete a Wall note (author or ADMIN; the server decides). Optimistic: the
+ * note leaves the post at once and comes back if the server says no.
+ */
+export function useDeleteComment(slug: string) {
+  const client = useQueryClient();
+  const key = queryKeys.post(slug);
+  return useMutation({
+    mutationFn: (commentId: string) =>
+      api.delete<{ deleted: true }>(
+        `/posts/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}`,
+      ),
+    onMutate: async (commentId) => {
+      await client.cancelQueries({ queryKey: key, exact: true });
+      const previous = client.getQueryData<PostDetailDTO>(key);
+      if (previous) client.setQueryData<PostDetailDTO>(key, withoutComment(previous, commentId));
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) client.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: key, exact: true });
     },
   });
 }
