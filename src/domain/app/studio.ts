@@ -19,6 +19,8 @@ export type SavedEvent = {
   title: string;
   venue: string;
   start: string;
+  /** Saved since Oct 2026; older saves fall back to the night's Eastern day. */
+  end?: string;
 };
 
 /** Web `SavedLibrary` — a studio's saved posts and events. */

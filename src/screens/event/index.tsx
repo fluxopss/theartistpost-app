@@ -173,7 +173,7 @@ function EventBody({ event }: { event: EventDTO }) {
           accessibilityLabel={saved ? "Remove from saved" : "Save this night"}
           onPress={() => {
             if (process.env.EXPO_OS === "ios") Haptics.selectionAsync();
-            toggleEvent({ id: event.id, title: event.title, venue: event.venue, start: event.start });
+            toggleEvent({ id: event.id, title: event.title, venue: event.venue, start: event.start, end: event.end });
           }}
           style={{ flexGrow: 1 }}
         />

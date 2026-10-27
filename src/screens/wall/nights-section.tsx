@@ -3,7 +3,6 @@ import { View } from "react-native";
 
 import { isApiError } from "@/api/errors";
 import type { useEvents } from "@/api/hooks";
-import type { EventDTO } from "@/api/types";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
@@ -12,7 +11,8 @@ import { ListGroup } from "@/components/list-row";
 import { SectionHeader } from "@/components/section-header";
 import { Skeleton } from "@/components/skeleton";
 import { appCopy } from "@/content/site";
-import { formatNightWhen, nightPhase, scheduleLabel } from "@/domain/night/program";
+import { formatNightWhen, nightPhase } from "@/domain/night/program";
+import { openNights, upcomingLabel } from "@/domain/night/visibility";
 import { radius, spacing } from "@/theme";
 import { tabRoutes } from "@/utils/links";
 
@@ -20,13 +20,7 @@ import { tabRoutes } from "@/utils/links";
 const SHELF_LIMIT = 4;
 const ROWS_SKELETON = 150;
 
-function openNights(events: EventDTO[], now = new Date()): EventDTO[] {
-  return events
-    .filter((event) => nightPhase(event, now) !== "closed")
-    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-}
-
-/** Nights people can still walk into — never past-dated ones. */
+/** Nights people can still walk into — never past-dated or cancelled ones. */
 export function NightsSection({ query }: { query: ReturnType<typeof useEvents> }) {
   const nights = query.data ? openNights(query.data) : undefined;
   const hasMore = (nights?.length ?? 0) > SHELF_LIMIT;
@@ -79,7 +73,7 @@ export function NightsSection({ query }: { query: ReturnType<typeof useEvents> }
                     title={event.title}
                     time={when.time}
                     venue={event.venue}
-                    status={scheduleLabel(event)}
+                    status={upcomingLabel(event)}
                     statusTone={nightPhase(event) === "live" ? "live" : "muted"}
                     onPress={() => router.push({ pathname: "/event/[id]", params: { id: event.id } })}
                     separator={index < shown.length - 1}

@@ -2,6 +2,7 @@ import { router, Stack } from "expo-router";
 import { View } from "react-native";
 import Animated, { FadeOut, LinearTransition } from "react-native-reanimated";
 
+import { useEvents } from "@/api/hooks";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
 import { ListGroup } from "@/components/list-row";
@@ -9,6 +10,7 @@ import { ScreenScroll } from "@/components/screen-scroll";
 import { copy } from "@/content/site";
 import type { SavedEvent } from "@/domain/app/studio";
 import { formatNightWhen } from "@/domain/night/program";
+import { savedNightNotice } from "@/domain/night/visibility";
 import { useSaves } from "@/storage/saves";
 import { duration, spacing } from "@/theme";
 import { tabRoutes } from "@/utils/links";
@@ -29,6 +31,8 @@ function nightWhen(event: SavedEvent) {
 /** Works and nights kept on this phone. */
 export function SavedScreen() {
   const { saves, count, toggleEvent, togglePost } = useSaves();
+  // The board (usually already cached) says whether a saved night was cancelled.
+  const board = useEvents();
   const hasNights = saves.events.length > 0;
   const hasWorks = saves.posts.length > 0;
 
@@ -64,16 +68,21 @@ export function SavedScreen() {
           <ListGroup header="Nights" footer={hasWorks ? undefined : "Kept on this phone only."}>
             {saves.events.map((event, index) => {
               const when = nightWhen(event);
+              const notice = savedNightNotice(
+                event,
+                board.data?.find((night) => night.id === event.id),
+              );
+              const detail = when ? `${when.weekday} · ${when.time} · ${event.venue}` : event.venue;
               return (
                 <Animated.View key={event.id} exiting={rowExit} layout={rowLayout}>
                   <SavedRow
                     title={event.title}
-                    detail={when ? `${when.weekday} · ${when.time} · ${event.venue}` : event.venue}
-                    accessibilityLabel={
+                    detail={notice ? `${notice} · ${detail}` : detail}
+                    accessibilityLabel={`${notice ? `${notice}. ` : ""}${
                       when
                         ? `${event.title}. ${when.weekday} ${when.month} ${when.day}, ${when.time} Eastern. ${event.venue}.`
                         : `${event.title}. ${event.venue}.`
-                    }
+                    }`}
                     accessibilityHint="Opens the night"
                     leading={when ? <DateBlock month={when.month} day={when.day} /> : undefined}
                     href={{ pathname: "/event/[id]", params: { id: event.id } }}
