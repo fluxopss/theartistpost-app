@@ -3,6 +3,7 @@ import Constants from "expo-constants";
 import { File } from "expo-file-system";
 
 import { getAuthToken } from "@/auth/token";
+import { isSessionExpiry } from "@/domain/auth/session-expiry";
 
 import { ApiError, type ApiErrorCode } from "./errors";
 
@@ -25,18 +26,28 @@ type RequestInitShape = {
   formData?: FormData;
 };
 
-function authHeaders(anonymous?: boolean): Record<string, string> {
-  const token = anonymous ? null : getAuthToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+/**
+ * Called once per expired token when a signed-in request comes back 401
+ * (see `isSessionExpiry`). The auth provider registers it to sign out and
+ * offer sign-in; the client itself never touches session state.
+ */
+let onSessionExpired: (() => void) | null = null;
+let handledExpiredToken: string | null = null;
+
+export function setSessionExpiredHandler(handler: (() => void) | null): void {
+  onSessionExpired = handler;
 }
+
+export const SESSION_EXPIRED_MESSAGE = "Your sign-in has expired. Sign in again to keep going.";
 
 async function request<T>(path: string, init: RequestInitShape = {}): Promise<T> {
   let response: Response;
+  const sentToken = init.anonymous ? null : getAuthToken();
   try {
     const headers: Record<string, string> = {
       Accept: "application/json",
       "X-TAP-Client": clientHeader,
-      ...authHeaders(init.anonymous),
+      ...(sentToken ? { Authorization: `Bearer ${sentToken}` } : {}),
     };
     if (init.formData === undefined && init.body !== undefined) {
       headers["Content-Type"] = "application/json";
@@ -56,6 +67,20 @@ async function request<T>(path: string, init: RequestInitShape = {}): Promise<T>
   } catch (cause) {
     if ((cause as Error)?.name === "AbortError") throw cause;
     throw new ApiError("Couldn't reach The Artist Post.", "network", 0);
+  }
+
+  if (
+    isSessionExpiry({
+      status: response.status,
+      path,
+      sentToken,
+      currentToken: getAuthToken(),
+      alreadyHandledToken: handledExpiredToken,
+    })
+  ) {
+    handledExpiredToken = sentToken;
+    onSessionExpired?.();
+    throw new ApiError(SESSION_EXPIRED_MESSAGE, "unauthorized", 401);
   }
 
   let payload: Envelope<T> | undefined;
