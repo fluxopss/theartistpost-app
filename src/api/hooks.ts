@@ -13,6 +13,7 @@ import { withoutComment } from "@/domain/posts/comments";
 
 import { api } from "./client";
 import type {
+  AppConfigDTO,
   ArtistDTO,
   AuthorTimelineDTO,
   EventDTO,
@@ -67,6 +68,7 @@ import type {
 } from "./types";
 
 export const queryKeys = {
+  appConfig: ["app", "config"] as const,
   events: ["events"] as const,
   event: (id: string) => ["events", id] as const,
   featuredNight: ["night", "featured"] as const,
@@ -103,6 +105,20 @@ export const queryKeys = {
   adminAttendees: (id: string) => ["admin", "events", id, "rsvps"] as const,
   adminCheckIns: (id: string) => ["admin", "events", id, "checkins"] as const,
 };
+
+/**
+ * Launch config (minimum supported version, flags). Checked once per launch
+ * and on foreground after five minutes; never retried hard, since the gate
+ * that reads it fails open.
+ */
+export function useAppConfig() {
+  return useQuery({
+    queryKey: queryKeys.appConfig,
+    queryFn: ({ signal }) => api.get<AppConfigDTO>("/app/config", signal),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+}
 
 export function useEvents() {
   return useQuery({

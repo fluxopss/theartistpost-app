@@ -2,12 +2,14 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { ThemeProvider } from "expo-router";
 import { Stack } from "expo-router/stack";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { persistBuster, persister, queryClient } from "@/api/query-client";
 import { AuthProvider } from "@/auth";
+import { useUpdateRequired } from "@/hooks/use-update-required";
+import { UpdateRequiredScreen } from "@/screens/update-required";
 import { applyStoredAppearance } from "@/storage/appearance";
 import { useBrandColors, useBrandFonts, useNavigationTheme } from "@/theme";
 
@@ -21,6 +23,12 @@ const WEEK = 7 * 24 * 60 * 60 * 1000;
 // iOS sheets get the native material (Liquid Glass on iOS 26) when the
 // content is transparent; Android sheets need a real surface.
 const ios = process.env.EXPO_OS === "ios";
+
+/** Blocks the app only when the house says this version is too old; fails open otherwise. */
+function UpdateGate({ children }: { children: ReactNode }) {
+  const updateRequired = useUpdateRequired();
+  return updateRequired ? <UpdateRequiredScreen /> : children;
+}
 
 export default function RootLayout() {
   const navigationTheme = useNavigationTheme();
@@ -42,110 +50,112 @@ export default function RootLayout() {
         >
           <AuthProvider>
             <ThemeProvider value={navigationTheme}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="rsvp"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.75, 1],
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="compose-kindness"
-                  options={{ presentation: "modal", headerShown: false }}
-                />
-                <Stack.Screen
-                  name="compose-studio"
-                  options={{ presentation: "modal", headerShown: true }}
-                />
-                <Stack.Screen
-                  name="join"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.9, 1],
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="compose-community"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.9, 1],
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="edit-profile"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.9, 1],
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="welcome"
-                  options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
-                />
-                <Stack.Screen name="inquiry" options={{ presentation: "modal", headerShown: false }} />
-                <Stack.Screen name="activity" options={{ headerShown: true, title: "Activity" }} />
-                <Stack.Screen
-                  name="report"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.75, 1],
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="reactors"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.6, 1],
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
-                <Stack.Screen name="artist-requests" options={{ headerShown: true, title: "Artist requests" }} />
-                <Stack.Screen name="manage-events" options={{ headerShown: true, title: "Manage events" }} />
-                <Stack.Screen name="manage-event/[id]" options={{ headerShown: true, title: "Night" }} />
-                <Stack.Screen name="my-nights" options={{ headerShown: true, title: "My nights" }} />
-                <Stack.Screen
-                  name="event-form"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.9, 1],
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen name="manage-people" options={{ headerShown: true, title: "People" }} />
-                <Stack.Screen name="manage-person/[id]" options={{ headerShown: true, title: "Member" }} />
-                <Stack.Screen
-                  name="note/[id]"
-                  options={{
-                    presentation: "formSheet",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: "fitToContents",
-                    contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
-                    headerShown: false,
-                  }}
-                />
-              </Stack>
+              <UpdateGate>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="rsvp"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.75, 1],
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="compose-kindness"
+                    options={{ presentation: "modal", headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="compose-studio"
+                    options={{ presentation: "modal", headerShown: true }}
+                  />
+                  <Stack.Screen
+                    name="join"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.9, 1],
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="compose-community"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.9, 1],
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="edit-profile"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.9, 1],
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="welcome"
+                    options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
+                  />
+                  <Stack.Screen name="inquiry" options={{ presentation: "modal", headerShown: false }} />
+                  <Stack.Screen name="activity" options={{ headerShown: true, title: "Activity" }} />
+                  <Stack.Screen
+                    name="report"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.75, 1],
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="reactors"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.6, 1],
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
+                  <Stack.Screen name="artist-requests" options={{ headerShown: true, title: "Artist requests" }} />
+                  <Stack.Screen name="manage-events" options={{ headerShown: true, title: "Manage events" }} />
+                  <Stack.Screen name="manage-event/[id]" options={{ headerShown: true, title: "Night" }} />
+                  <Stack.Screen name="my-nights" options={{ headerShown: true, title: "My nights" }} />
+                  <Stack.Screen
+                    name="event-form"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.9, 1],
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen name="manage-people" options={{ headerShown: true, title: "People" }} />
+                  <Stack.Screen name="manage-person/[id]" options={{ headerShown: true, title: "Member" }} />
+                  <Stack.Screen
+                    name="note/[id]"
+                    options={{
+                      presentation: "formSheet",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: "fitToContents",
+                      contentStyle: { backgroundColor: ios ? "transparent" : palette.bgElevated },
+                      headerShown: false,
+                    }}
+                  />
+                </Stack>
+              </UpdateGate>
             </ThemeProvider>
           </AuthProvider>
         </PersistQueryClientProvider>

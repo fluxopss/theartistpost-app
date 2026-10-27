@@ -29,6 +29,14 @@ export type EventDTO = {
   coverImageUrl: string | null;
 };
 
+/** GET /api/v1/app/config — mirror of theartistpost `src/server/api/appConfig.ts`. */
+export type AppConfigDTO = {
+  minSupportedVersion: string;
+  latestVersion: string;
+  flags: { wallCanvas: boolean; publishing: boolean; accounts: boolean };
+  notices: { id: string; title: string; body: string }[];
+};
+
 export type RsvpStatus = "GOING" | "MAYBE" | "NOT_GOING";
 
 export type EventRsvpDTO = {
