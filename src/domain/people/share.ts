@@ -1,18 +1,31 @@
 /**
- * The live public site. Shared links never point at a dev API origin.
- * Set EXPO_PUBLIC_SITE_URL=https://theartistpost.org in eas.json once the
- * domain cutover is live; until then links use the Flux address, which
- * 301s page requests to the real domain after cutover, so old shares keep working.
+ * The live public website. Shared and "open on the web" links always point
+ * here, never at the API host: the API (EXPO_PUBLIC_API_URL) stays on the
+ * Flux address, while pages people open live on theartistpost.org.
+ * EXPO_PUBLIC_SITE_URL can override it per build profile (see eas.json).
  */
-const DEFAULT_SITE_ORIGIN = "https://theartistpost.fluxlab.agency";
+const DEFAULT_SITE_ORIGIN = "https://theartistpost.org";
 
-function siteOrigin(): string {
+export function siteOrigin(): string {
   const raw = (process.env.EXPO_PUBLIC_SITE_URL ?? "").trim().replace(/\/+$/, "");
   return /^https:\/\/[a-z0-9.-]+$/i.test(raw) ? raw : DEFAULT_SITE_ORIGIN;
 }
 
+/** Absolute web-page URL for a site path ("/event/x" → "https://theartistpost.org/event/x"). */
+export function siteUrl(path: string): string {
+  return `${siteOrigin()}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+export function eventPageUrl(id: string): string {
+  return siteUrl(`/event/${encodeURIComponent(id)}`);
+}
+
+export function postPageUrl(slug: string): string {
+  return siteUrl(`/post/${encodeURIComponent(slug)}`);
+}
+
 export function profileShareUrl(handle: string): string {
-  return `${siteOrigin()}/u/${handle.trim().toLowerCase()}`;
+  return siteUrl(`/u/${handle.trim().toLowerCase()}`);
 }
 
 export function profileShareMessage(name: string, handle: string): string {

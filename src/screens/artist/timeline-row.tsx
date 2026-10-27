@@ -1,9 +1,9 @@
 import { Link } from "expo-router";
 import { Pressable, View } from "react-native";
 
-import { API_ORIGIN } from "@/api/client";
 import type { PostSummaryDTO } from "@/api/types";
 import { ThemedText } from "@/components/themed-text";
+import { postPageUrl } from "@/domain/people/share";
 import { spacing } from "@/theme";
 import { PostMedia } from "@/screens/post/post-media";
 
@@ -25,7 +25,7 @@ function publishedLabel(iso: string | null) {
  */
 export function TimelineRow({ post }: { post: PostSummaryDTO }) {
   const when = publishedLabel(post.publishedAt);
-  const webUrl = `${API_ORIGIN}/post/${encodeURIComponent(post.slug)}`;
+  const webUrl = postPageUrl(post.slug);
 
   return (
     <View style={{ gap: spacing.sm }}>
