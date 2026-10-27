@@ -1,7 +1,8 @@
 // Ported from theartistpost@f604e5f:src/app/privacy/page.tsx, src/app/terms/page.tsx
 // and src/app/support/page.tsx (kicker + title from each page's LegalLayout).
 /**
- * Privacy, Terms and Support, faithful to the web pages. Where the web text
+ * Terms and Support, faithful to the web pages (Privacy is written for the
+ * app; see its note). Where the web text
  * describes the browser/installable web app, it is adapted minimally for the
  * native app and each change is marked `// native:`.
  *
@@ -37,54 +38,64 @@ export type LegalDoc = {
 };
 
 export const legalDocs: Record<LegalDocId, LegalDoc> = {
+  // Privacy is written for the native app as it works today (accounts,
+  // profiles, posts, RSVPs, check-in). It states the same facts as the
+  // website's /privacy page; wording differs where the app differs (no ads,
+  // no analytics, no browser storage). Pending Robbie's review.
   privacy: {
     kicker: "Legal",
     title: "Privacy Policy",
-    updated: "August 28, 2026",
+    updated: "October 27, 2026",
     sections: [
       {
         body: [
-          `${site.legalName} (${site.nonprofitLine} EIN ${site.ein}) operates The Artist Post at ${site.address.full}. Contact ${site.email} or ${site.phone}.`,
+          `${site.legalName} (${site.nonprofitLine} EIN ${site.ein}) operates The Artist Post at ${site.address.full}. Questions about your information: ${site.email} or ${site.phone}.`,
         ],
       },
       {
         heading: "What we collect",
         list: "lead-in",
         body: [
-          "Get Involved and subscribe. Name, email, optional phone, city, and the message you write. These are sent to our operations webhook (GoHighLevel) when it is configured so Robbie can follow up.",
-          // native: "stay in your browser storage" → "stay in this app’s storage on your phone".
-          "On this device. Studio name, likes, saved works and nights, kindness notes, comments, theme, and motion preference stay in this app’s storage on your phone. They are not uploaded until artist accounts exist.",
+          "Your account. Your name and email. You sign in with a code we email you; there is no password. We keep the account on our servers so you can sign in on another phone.",
+          "Your profile. Your handle, plus anything you choose to add: a photo, bio, headline, city, chapter, topics, and Venmo, Cash App or PayPal.me usernames. Your profile and what you add to it are public.",
+          "What you share. Posts and replies on the community board, notes on works, reactions, follows, and the photos you attach. These are public to people using The Artist Post. Artists can also publish works to the Wall.",
+          "Photos. The app asks for your photo library only when you choose a picture, and uploads only the picture you pick. It does not use your camera or microphone.",
+          "RSVPs. When you RSVP to a night we keep your answer, party size, and any note, so the house team can plan seats.",
+          "Check-in at events. Checking in is optional. If you tap “Use my location”, the app reads your location once and sends it to confirm you are at the venue. We keep that you checked in and whether it was confirmed, not where you were. The app never tracks your location in the background.",
+          "Reports and blocks. If you report something, the house team sees the report and your account. If you block someone, we keep the block so you stop seeing each other.",
+          "Get Involved and subscribe. Name, email, optional phone, city, and the message you write. These are sent to our operations system (GoHighLevel) so Robbie can follow up.",
+          "On this phone. Saved works and nights, kindness notes you write in the app, your theme, and a copy of recent content for offline use stay on your phone.",
           "Donations and merch. PayPal and Bonfire process those payments. We do not see card numbers.",
-          "Optional analytics. If a Pulse key is configured, we record anonymous product events such as Donate or Get Involved taps.",
+        ],
+      },
+      {
+        heading: "How we use it",
+        body: [
+          "To run your account, show what you share to the community, hold seats at nights, keep the community safe, and reply when you reach out. Our hosting and email providers process it for us to do that.",
         ],
       },
       {
         heading: "What we do not do",
         body: [
-          "We do not sell personal information. We do not run a public account system yet — a “Studio Guest” name is local only. We do not invent artists, testimonials, or chapter leads.",
+          "We do not sell personal information. The app does not show ads and does not include advertising or analytics trackers. We do not invent artists, testimonials, or chapter leads.",
         ],
       },
       {
         heading: "Children",
         body: [
-          "The app is a community arts hub, not directed at children under 13. Do not submit personal information for a child under 13.",
+          "The Artist Post is a community arts hub, not directed at children under 13. Do not create an account or submit personal information for a child under 13.",
         ],
       },
       {
         heading: "Your choices",
         body: [
-          // native: "You can install or uninstall the web app at any time." →
-          // "You can uninstall the app at any time."
-          "Clear local studio data in Settings. Email Robbie to ask us to delete a Get Involved or subscribe record. You can uninstall the app at any time.",
+          "Edit or remove profile details in Edit profile. Delete your own posts and notes from their menu. Delete your account in Settings, which removes your profile and what you shared. Email Robbie to delete a Get Involved or subscribe record, or with any other request. Signing out or uninstalling clears what is kept on this phone.",
         ],
       },
       {
-        // native: heading was "App Store build", and its first sentence described
-        // the iOS web wrapper ("The iOS wrapper loads this same site."). The rest
-        // of the paragraph is verbatim.
-        heading: "The native app",
+        heading: "Permissions",
         body: [
-          "This app is built natively for iPhone and Android and shows the same content as the website. It does not add extra trackers. Camera or photo library access is only used if you choose an image in Create. Push notifications are not active until we ship a native reminder feature and ask permission.",
+          "The app asks for your photo library (to choose a picture) and your location (only when you check in). Adding a night to your calendar uses your phone’s own calendar sheet. Push notifications are not turned on.",
         ],
       },
     ],
