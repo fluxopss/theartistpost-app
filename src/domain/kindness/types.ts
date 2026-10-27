@@ -52,9 +52,3 @@ export const SPARK_LABELS: Record<KindnessSpark, string> = {
   gold: "Gold spark",
   teal: "Teal spark",
 };
-
-export const SPARK_HEX: Record<KindnessSpark, string> = {
-  coral: "#ff6b5b",
-  gold: "#f0b429",
-  teal: "#2ec4b6",
-};

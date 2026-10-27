@@ -4,7 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { useOpenStatus } from "@/hooks/use-open-status";
 import { radius, spacing, stageLine, stageSurface, useBrandColors } from "@/theme";
 
-/** "● Open now · 9:00 AM – 9:30 PM" for the live room on Clematis. */
+/** "● Open now · 11 AM – Midnight" (today's posted Hacienda hours) for the live room on Clematis. */
 export function OpenStatusPill({ tone = "default" }: { tone?: "default" | "stage" }) {
   const palette = useBrandColors();
   const { open, label, hoursLabel } = useOpenStatus();
