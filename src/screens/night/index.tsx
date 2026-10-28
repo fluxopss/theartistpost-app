@@ -15,6 +15,7 @@ import { ThemedText } from "@/components/themed-text";
 import { TicketPass } from "@/components/ticket-pass";
 import { copy } from "@/content/site";
 import { passFromRsvp } from "@/domain/events/rsvp";
+import { presentedByFrom } from "@/domain/events/sponsors";
 import { floorBeats, formatNightWhen, nightPhase, stampWord } from "@/domain/night/program";
 import { useNight } from "@/storage/night";
 import { useStudio } from "@/storage/studio";
@@ -115,6 +116,7 @@ function NightRoom({ event }: { event: EventDTO }) {
           venue={event.venue}
           when={when}
           stamp={stampWord(phase)}
+          presentedBy={presentedByFrom(event.presentedBy)?.name}
           holder={pass ? `${pass.name} · ${pass.party === 1 ? "1 seat" : `${pass.party} seats`}` : undefined}
           code={pass?.code}
           footer={

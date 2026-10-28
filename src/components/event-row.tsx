@@ -2,6 +2,7 @@ import { Pressable, View } from "react-native";
 
 import { Icon } from "@/components/icon";
 import { ThemedText } from "@/components/themed-text";
+import { presentedByLine } from "@/domain/events/sponsors";
 import { radius, spacing, useBrandColors } from "@/theme";
 
 /**
@@ -17,6 +18,7 @@ export function EventRow({
   venue,
   status,
   statusTone = "muted",
+  presentedBy,
   onPress,
   separator = true,
 }: {
@@ -28,6 +30,8 @@ export function EventRow({
   venue: string;
   status?: string;
   statusTone?: "muted" | "live" | "accent";
+  /** Sponsor name on a sponsored night; nothing shows without one. */
+  presentedBy?: string | null;
   onPress?: () => void;
   separator?: boolean;
 }) {
@@ -42,7 +46,9 @@ export function EventRow({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${title}. ${weekday} ${month} ${day}, ${time}. ${venue}.${status ? ` ${status}.` : ""}`}
+      accessibilityLabel={`${title}. ${weekday} ${month} ${day}, ${time}. ${venue}.${status ? ` ${status}.` : ""}${
+        presentedBy ? ` ${presentedByLine(presentedBy)}.` : ""
+      }`}
       disabled={!onPress}
       onPress={onPress}
       style={({ pressed }) => ({
@@ -94,6 +100,11 @@ export function EventRow({
           <ThemedText variant="footnote" tone="muted" numberOfLines={1}>
             {weekday} · {time} · {venue}
           </ThemedText>
+          {presentedBy ? (
+            <ThemedText variant="caption" tone="muted" numberOfLines={1}>
+              {presentedByLine(presentedBy)}
+            </ThemedText>
+          ) : null}
         </View>
         {onPress ? (
           <Icon name="chevronRight" size={14} color={palette.textMuted} weight="semibold" />

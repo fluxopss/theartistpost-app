@@ -8,11 +8,13 @@ import { isApiError } from "@/api/errors";
 import { AsyncView } from "@/components/async-view";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
+import { FilterChips } from "@/components/filter-chips";
 import { GenreRail } from "@/components/genre-rail";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { appCopy, copy } from "@/content/site";
+import { ALL_LANES, mediumLabel, nightsInLane, scheduleLaneOptions } from "@/domain/events/lanes";
 import { openNights } from "@/domain/night/visibility";
 import { radius, screenMargin, spacing, useBrandColors, useBrandScheme } from "@/theme";
 import { contact } from "@/utils/links";
@@ -36,8 +38,11 @@ export function ScheduleScreen() {
   const events = useEvents();
   const featured = useFeaturedNight();
   const [mode, setMode] = useState<ScheduleViewMode>("List");
+  const [lane, setLane] = useState<string>(ALL_LANES);
 
   const upcoming = useMemo(() => (events.data ? openNights(events.data) : undefined), [events.data]);
+  // Filters the list already fetched; no server support needed.
+  const inLane = useMemo(() => (upcoming ? nightsInLane(upcoming, lane) : undefined), [upcoming, lane]);
   const night = featured.data?.event;
 
   return (
@@ -75,8 +80,16 @@ export function ScheduleScreen() {
           tintColor={palette.accent}
           appearance={scheme}
         />
+        {upcoming && upcoming.length > 0 ? (
+          <FilterChips
+            label="Schedule lanes"
+            options={[...scheduleLaneOptions]}
+            value={lane}
+            onChange={setLane}
+          />
+        ) : null}
         <AsyncView
-          data={upcoming}
+          data={inLane}
           isPending={events.isPending}
           error={events.error}
           offline={isApiError(events.error) && events.error.offline}
@@ -91,19 +104,23 @@ export function ScheduleScreen() {
             </View>
           }
           empty={
-            <EmptyState
-              icon="schedule"
-              title={appCopy.scheduleEmptyTitle}
-              body={appCopy.scheduleEmptyBody}
-              action={
-                <Button
-                  title="Visit the house"
-                  variant="secondary"
-                  icon="directions"
-                  onPress={contact.directions}
-                />
-              }
-            />
+            lane !== ALL_LANES && upcoming && upcoming.length > 0 ? (
+              <EmptyState
+                icon="schedule"
+                title={`No ${mediumLabel(lane)} nights on the calendar yet.`}
+                body="New nights land here as soon as they are booked. Every lane is welcome at the house."
+                action={<Button title="See all nights" variant="secondary" onPress={() => setLane(ALL_LANES)} />}
+              />
+            ) : (
+              <EmptyState
+                icon="schedule"
+                title={appCopy.scheduleEmptyTitle}
+                body={appCopy.scheduleEmptyBody}
+                action={
+                  <Button title="Visit the house" variant="secondary" icon="directions" onPress={contact.directions} />
+                }
+              />
+            )
           }
         >
           {(list) => (mode === "List" ? <EventList events={list} /> : <MonthView events={list} />)}

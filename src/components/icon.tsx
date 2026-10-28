@@ -56,6 +56,9 @@ export const iconMap = {
   wifiOff: { sf: "wifi.slash", md: "wifi-off" },
   bell: { sf: "bell", md: "notifications-none" },
   more: { sf: "ellipsis", md: "more-horiz" },
+  food: { sf: "fork.knife", md: "restaurant" },
+  storefront: { sf: "storefront", md: "storefront" },
+  minusCircle: { sf: "minus.circle", md: "remove-circle-outline" },
 } as const satisfies Record<
   string,
   { sf: SymbolViewProps["name"]; md: MaterialName }

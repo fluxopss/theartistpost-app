@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Pressable, type StyleProp, View, type ViewStyle } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import { presentedByLine } from "@/domain/events/sponsors";
 import { fonts, paper, radius, shadows, spacing } from "@/theme";
 
 export type TicketWhen = {
@@ -25,6 +26,7 @@ export function TicketPass({
   holder,
   code,
   footer,
+  presentedBy,
   onPress,
   style,
 }: {
@@ -36,14 +38,16 @@ export function TicketPass({
   holder?: string;
   code?: string;
   footer?: ReactNode;
+  /** Sponsor name on a sponsored night; nothing shows without one. */
+  presentedBy?: string | null;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
   const t = paper.ticket;
   const isPass = variant === "pass";
   const label = `${stamp}. ${title}, ${when.weekday} ${when.month} ${when.day}, ${when.time}. ${venue}.${
-    code ? ` Pass ${code}.` : ""
-  }`;
+    presentedBy ? ` ${presentedByLine(presentedBy)}.` : ""
+  }${code ? ` Pass ${code}.` : ""}`;
 
   const body = (
     <View
@@ -114,6 +118,11 @@ export function TicketPass({
           {when.time}
           {when.endTime ? ` – ${when.endTime}` : ""} · {venue}
         </ThemedText>
+        {presentedBy ? (
+          <ThemedText variant="caption" style={{ color: t.muted }} numberOfLines={1}>
+            {presentedByLine(presentedBy)}
+          </ThemedText>
+        ) : null}
         {isPass && (holder || code) ? (
           <View style={{ flexDirection: "row", gap: spacing.md, marginTop: spacing.xs }}>
             {holder ? (

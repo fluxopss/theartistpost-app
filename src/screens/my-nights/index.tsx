@@ -12,6 +12,7 @@ import { ListGroup } from "@/components/list-row";
 import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
 import { rsvpHeadline } from "@/domain/events/rsvp";
+import { presentedByFrom } from "@/domain/events/sponsors";
 import { formatNightWhen, nightPhase } from "@/domain/night/program";
 import { radius, spacing } from "@/theme";
 import { tabRoutes } from "@/utils/links";
@@ -79,6 +80,7 @@ export function MyNightsScreen() {
                       venue={event.venue}
                       status={event.cancelled ? "Cancelled" : (rsvpHeadline(rsvp) ?? undefined)}
                       statusTone={phase === "live" ? "live" : "accent"}
+                      presentedBy={presentedByFrom(event.presentedBy)?.name}
                       onPress={() => router.push(`/event/${encodeURIComponent(event.id)}`)}
                       separator={index < data.items.length - 1}
                     />
