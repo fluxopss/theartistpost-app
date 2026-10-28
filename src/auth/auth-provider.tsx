@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import {
   createContext,
   useCallback,
@@ -8,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Alert } from "react-native";
 
+import { setSessionExpiredHandler } from "@/api/client";
 import { isApiError } from "@/api/errors";
 import { queryClient } from "@/api/query-client";
 import { identityChanged } from "@/domain/auth/identity";
@@ -196,6 +199,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 0);
     return () => clearTimeout(timer);
   }, [hydrate]);
+
+  // A signed-in request came back 401 mid-use (see api/client): the pass has
+  // expired or was revoked. Clear it on this phone, then offer sign-in once.
+  // The server never sees a logout call here; that token is already dead.
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      void (async () => {
+        const supabase = getSupabase();
+        if (supabase) {
+          try {
+            await supabase.auth.signOut({ scope: "local" });
+          } catch {
+            // Local clear still runs.
+          }
+        }
+        await applySession(null);
+        setUser(null);
+        setCanPublish(false);
+        setLastError(null);
+        Alert.alert("Please sign in again", "Your sign-in has expired. Sign in to keep going.", [
+          { text: "Not now", style: "cancel" },
+          { text: "Sign in", onPress: () => router.push("/join") },
+        ]);
+      })();
+    });
+    return () => setSessionExpiredHandler(null);
+  }, []);
 
   const joinMember = useCallback(async (input: JoinMemberInput) => {
     try {

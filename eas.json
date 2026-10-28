@@ -9,7 +9,8 @@
       "distribution": "internal",
       "env": {
         "APP_VARIANT": "development",
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
+        "EXPO_PUBLIC_SITE_URL": "https://theartistpost.org"
       }
     },
     "development-simulator": {
@@ -23,7 +24,8 @@
       "channel": "preview",
       "env": {
         "APP_VARIANT": "preview",
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
+        "EXPO_PUBLIC_SITE_URL": "https://theartistpost.org"
       }
     },
     "ios-simulator": {
@@ -43,7 +45,8 @@
       },
       "env": {
         "APP_VARIANT": "production",
-        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency"
+        "EXPO_PUBLIC_API_URL": "https://theartistpost.fluxlab.agency",
+        "EXPO_PUBLIC_SITE_URL": "https://theartistpost.org"
       }
     }
   },

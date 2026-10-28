@@ -87,7 +87,8 @@ export function IdentityCard() {
           {!user && (isGuest || !initial) ? (
             <Icon name="studio" size={28} color={stageText} />
           ) : (
-            <ThemedText variant="title1" maxFontSizeMultiplier={1} style={{ color: spark.teal }}>
+            // Grows with Larger Text up to 1.3× (≈36pt), which still fits the 56pt circle.
+            <ThemedText variant="title1" maxFontSizeMultiplier={1.3} style={{ color: spark.teal }}>
               {initial || "·"}
             </ThemedText>
           )}

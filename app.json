@@ -74,10 +74,31 @@
           "locationAlwaysPermission": false,
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false,
-          "isAndroidForegroundServiceEnabled": false
+          "isAndroidForegroundServiceEnabled": false,
+          "motionUsagePermission": "The Artist Post does not use motion or fitness data."
         }
       ],
-      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The Artist Post uses your photos so you can add pictures to your profile and posts. Only the picture you choose is uploaded.",
+          "cameraPermission": "The Artist Post does not use your camera. Pick a photo from your library instead.",
+          "microphonePermission": "The Artist Post does not use your microphone."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "The Artist Post uses your calendar only to add a night you choose to save. It does not read or change your other events.",
+          "remindersPermission": "The Artist Post does not use your reminders."
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": "The Artist Post does not use Face ID."
+        }
+      ],
       "expo-sqlite",
       "expo-sharing",
       "expo-video",

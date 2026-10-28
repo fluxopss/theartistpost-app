@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Share, View } from "react-native";
 
 import { displayHandle, useAuth } from "@/auth";
-import { originUrl } from "@/api/client";
 import { isApiError } from "@/api/errors";
 import { useLikeStatus, usePost, useSetWallReaction } from "@/api/hooks";
 import type { PostDetailDTO } from "@/api/types";
@@ -18,6 +17,7 @@ import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { copy, site } from "@/content/site";
 import { emptyReactionCounts, type Reaction } from "@/domain/community/reactions";
+import { postPageUrl } from "@/domain/people/share";
 import { mediaKindLabel } from "@/domain/posts/media";
 import { useSaves } from "@/storage/saves";
 import { radius, spacing, useBrandColors } from "@/theme";
@@ -99,7 +99,7 @@ function PostBody({ post }: { post: PostDetailDTO }) {
   const likeCount = likeStatus.data?.likeCount ?? post.likeCount;
   // Servers without reactions only know hearts: show them as LOVE.
   const reactionCounts = likeStatus.data?.reactionCounts ?? { ...emptyReactionCounts(), LOVE: likeCount };
-  const webUrl = originUrl(`/post/${post.slug}`);
+  const webUrl = postPageUrl(post.slug);
   const date = published(post.publishedAt);
 
   const onReact = async (next: Reaction | null) => {

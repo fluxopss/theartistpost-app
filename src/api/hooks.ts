@@ -9,9 +9,11 @@ import {
   type ReactionState,
 } from "@/domain/community/reactions";
 import { profileChangeFromServer, queryKeysToRefreshAfterProfileUpdate } from "@/domain/people/profile-sync";
+import { withoutComment } from "@/domain/posts/comments";
 
 import { api } from "./client";
 import type {
+  AppConfigDTO,
   ArtistDTO,
   AuthorTimelineDTO,
   EventDTO,
@@ -66,6 +68,7 @@ import type {
 } from "./types";
 
 export const queryKeys = {
+  appConfig: ["app", "config"] as const,
   events: ["events"] as const,
   event: (id: string) => ["events", id] as const,
   featuredNight: ["night", "featured"] as const,
@@ -102,6 +105,20 @@ export const queryKeys = {
   adminAttendees: (id: string) => ["admin", "events", id, "rsvps"] as const,
   adminCheckIns: (id: string) => ["admin", "events", id, "checkins"] as const,
 };
+
+/**
+ * Launch config (minimum supported version, flags). Checked once per launch
+ * and on foreground after five minutes; never retried hard, since the gate
+ * that reads it fails open.
+ */
+export function useAppConfig() {
+  return useQuery({
+    queryKey: queryKeys.appConfig,
+    queryFn: ({ signal }) => api.get<AppConfigDTO>("/app/config", signal),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+}
 
 export function useEvents() {
   return useQuery({
@@ -297,6 +314,33 @@ export function useCreateComment(slug: string) {
           comments: [comment, ...prev.comments],
         };
       });
+    },
+  });
+}
+
+/**
+ * Delete a Wall note (author or ADMIN; the server decides). Optimistic: the
+ * note leaves the post at once and comes back if the server says no.
+ */
+export function useDeleteComment(slug: string) {
+  const client = useQueryClient();
+  const key = queryKeys.post(slug);
+  return useMutation({
+    mutationFn: (commentId: string) =>
+      api.delete<{ deleted: true }>(
+        `/posts/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}`,
+      ),
+    onMutate: async (commentId) => {
+      await client.cancelQueries({ queryKey: key, exact: true });
+      const previous = client.getQueryData<PostDetailDTO>(key);
+      if (previous) client.setQueryData<PostDetailDTO>(key, withoutComment(previous, commentId));
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) client.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: key, exact: true });
     },
   });
 }

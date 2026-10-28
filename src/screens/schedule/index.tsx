@@ -13,7 +13,7 @@ import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { appCopy, copy } from "@/content/site";
-import { nightPhase } from "@/domain/night/program";
+import { openNights } from "@/domain/night/visibility";
 import { radius, screenMargin, spacing, useBrandColors, useBrandScheme } from "@/theme";
 import { contact } from "@/utils/links";
 
@@ -27,7 +27,7 @@ type ScheduleViewMode = (typeof views)[number];
 const ROW_SKELETON = 76;
 
 /**
- * Upcoming nights only. Past and placeholder dates never read as live, so
+ * Upcoming nights only. Past, cancelled and placeholder dates never read as live, so
  * an empty board says so plainly instead of padding the list.
  */
 export function ScheduleScreen() {
@@ -37,13 +37,7 @@ export function ScheduleScreen() {
   const featured = useFeaturedNight();
   const [mode, setMode] = useState<ScheduleViewMode>("List");
 
-  const upcoming = useMemo(
-    () =>
-      events.data
-        ?.filter((event) => nightPhase(event) !== "closed")
-        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()),
-    [events.data],
-  );
+  const upcoming = useMemo(() => (events.data ? openNights(events.data) : undefined), [events.data]);
   const night = featured.data?.event;
 
   return (

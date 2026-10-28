@@ -11,7 +11,8 @@ import { minTapTarget, useBrandColors } from "@/theme";
 
 /**
  * The ellipsis on any piece of community content: report it, block its
- * author, or delete your own. Self-contained so any screen can mount it.
+ * author, or delete it (your own, or anyone's for an admin). Self-contained so
+ * any screen can mount it.
  * iOS uses an action sheet; Android has none, so it gets an alert that pages
  * through the actions (an Android alert holds three buttons at most).
  */
@@ -70,7 +71,9 @@ export function ContentActionsMenu({
         run: () => confirmBlock(authorHandle),
       });
     }
-    if (isOwn && onDelete) {
+    // Callers pass onDelete only when deleting is allowed (own content, or an
+    // admin where the server permits it), so the menu trusts its presence.
+    if (onDelete) {
       actions.push({
         label: "Delete",
         destructive: true,
