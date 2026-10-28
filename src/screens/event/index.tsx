@@ -15,6 +15,8 @@ import { ScreenScroll } from "@/components/screen-scroll";
 import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { copy, site } from "@/content/site";
+import { mediumLabel } from "@/domain/events/lanes";
+import { presentedByFrom, vendorsFrom } from "@/domain/events/sponsors";
 import { formatNightWhen, nightPhase, scheduleLabel } from "@/domain/night/program";
 import { useSaves } from "@/storage/saves";
 import { radius, spacing } from "@/theme";
@@ -22,6 +24,8 @@ import { addEventToCalendar, shareEvent } from "@/utils/calendar";
 
 import { EventCheckInCard } from "./event-check-in-card";
 import { EventRsvpCard } from "./event-rsvp-card";
+import { PresentedByRow } from "./presented-by-row";
+import { VendorList } from "./vendor-list";
 import { contact, tabRoutes } from "@/utils/links";
 
 const HERO_SKELETON = 120;
@@ -85,6 +89,9 @@ function EventBody({ event }: { event: EventDTO }) {
   const phase = nightPhase(event);
   const saved = isEventSaved(event.id);
   const isFeatured = featured.data?.event?.id === event.id && phase !== "closed";
+  // Absent on servers before the sponsor migration: none, never an error.
+  const sponsor = presentedByFrom(event.presentedBy);
+  const vendors = vendorsFrom(event.vendors);
 
   return (
     <>
@@ -103,6 +110,7 @@ function EventBody({ event }: { event: EventDTO }) {
             {event.artist}
           </ThemedText>
         ) : null}
+        <PresentedByRow sponsor={sponsor} />
       </View>
 
       {event.cancelled ? (
@@ -140,7 +148,13 @@ function EventBody({ event }: { event: EventDTO }) {
           separator={Boolean(event.medium)}
         />
         {event.medium ? (
-          <ListRow icon="sparkle" title="Medium" value={event.medium} showChevron={false} separator={false} />
+          <ListRow
+            icon="sparkle"
+            title="Medium"
+            value={mediumLabel(event.medium)}
+            showChevron={false}
+            separator={false}
+          />
         ) : null}
       </ListGroup>
 
@@ -149,6 +163,8 @@ function EventBody({ event }: { event: EventDTO }) {
           {event.description}
         </ThemedText>
       ) : null}
+
+      <VendorList vendors={vendors} />
 
       {phase === "closed" && !event.cancelled ? (
         <ThemedText variant="footnote" tone="muted">

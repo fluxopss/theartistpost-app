@@ -5,6 +5,7 @@ import { useFeaturedNight } from "@/api/hooks";
 import { SectionHeader } from "@/components/section-header";
 import { TicketPass } from "@/components/ticket-pass";
 import { copy } from "@/content/site";
+import { presentedByFrom } from "@/domain/events/sponsors";
 import { formatNightWhen, stampWord } from "@/domain/night/program";
 import { spacing } from "@/theme";
 
@@ -26,6 +27,7 @@ export function NightTeaser() {
         venue={event.venue}
         when={formatNightWhen(event)}
         stamp={stampWord(data.phase)}
+        presentedBy={presentedByFrom(event.presentedBy)?.name}
         onPress={() => router.push("/night")}
       />
     </View>

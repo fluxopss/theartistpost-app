@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import type { EventDTO } from "@/api/types";
 import { EventRow } from "@/components/event-row";
 import { ListGroup } from "@/components/list-row";
+import { presentedByFrom } from "@/domain/events/sponsors";
 import { formatNightWhen, nightPhase } from "@/domain/night/program";
 import { upcomingLabel } from "@/domain/night/visibility";
 
@@ -28,6 +29,7 @@ export function EventList({ events, header }: { events: EventDTO[]; header?: str
             venue={event.venue}
             status={upcomingLabel(event)}
             statusTone={live ? "live" : event.cancelled || event.comingSoon ? "muted" : "accent"}
+            presentedBy={presentedByFrom(event.presentedBy)?.name}
             separator={i < events.length - 1}
             onPress={() => router.push({ pathname: "/event/[id]", params: { id: event.id } })}
           />

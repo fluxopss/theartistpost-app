@@ -11,6 +11,7 @@ import { ListGroup } from "@/components/list-row";
 import { SectionHeader } from "@/components/section-header";
 import { Skeleton } from "@/components/skeleton";
 import { appCopy } from "@/content/site";
+import { presentedByFrom } from "@/domain/events/sponsors";
 import { formatNightWhen, nightPhase } from "@/domain/night/program";
 import { openNights, upcomingLabel } from "@/domain/night/visibility";
 import { radius, spacing } from "@/theme";
@@ -75,6 +76,7 @@ export function NightsSection({ query }: { query: ReturnType<typeof useEvents> }
                     venue={event.venue}
                     status={upcomingLabel(event)}
                     statusTone={nightPhase(event) === "live" ? "live" : "muted"}
+                    presentedBy={presentedByFrom(event.presentedBy)?.name}
                     onPress={() => router.push({ pathname: "/event/[id]", params: { id: event.id } })}
                     separator={index < shown.length - 1}
                   />

@@ -17,11 +17,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isApiError } from "@/api/errors";
 import { useInvolve } from "@/api/hooks";
 import { Button } from "@/components/button";
+import { Chip } from "@/components/chip";
 import { TextField } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { doorById } from "@/content/involve";
 import { copy } from "@/content/site";
 import { INVOLVE_INTENTS, type InvolveIntent } from "@/domain/involve/intents";
+import { INQUIRY_MEDIUMS } from "@/domain/involve/mediums";
 import { involveInquirySchema } from "@/domain/involve/validation";
 import { screenMargin, spacing, type, useBrandColors, useBrandScheme } from "@/theme";
 
@@ -77,7 +79,6 @@ export function InquiryScreen() {
   const nameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const phoneRef = useRef<TextInput>(null);
-  const mediumRef = useRef<TextInput>(null);
   const cityRef = useRef<TextInput>(null);
   const messageRef = useRef<TextInput>(null);
 
@@ -90,17 +91,17 @@ export function InquiryScreen() {
     if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
-  /** Event-handler only: moves focus to a field (next-field chaining, first error). */
+  /** Event-handler only: moves focus to a field (next-field chaining, first error). The medium is a picker, not a text box. */
   const focusField = (field: Field) => {
     const target = {
       name: nameRef,
       email: emailRef,
       phone: phoneRef,
-      medium: mediumRef,
+      medium: null,
       city: cityRef,
       message: messageRef,
     }[field];
-    target.current?.focus();
+    target?.current?.focus();
   };
 
   const dismiss = () => {
@@ -294,22 +295,31 @@ export function InquiryScreen() {
               autoComplete="tel"
               returnKeyType="next"
               submitBehavior="submit"
-              onSubmitEditing={() => focusField("medium")}
-            />
-            <TextField
-              ref={mediumRef}
-              label="Medium (optional)"
-              value={draft.medium}
-              onChangeText={edit("medium")}
-              error={errors.medium}
-              maxLength={MAX.medium}
-              editable={!sending}
-              placeholder="Music, photography, dance…"
-              autoCapitalize="sentences"
-              returnKeyType="next"
-              submitBehavior="submit"
               onSubmitEditing={() => focusField("city")}
             />
+            <View style={{ gap: spacing.xs }} accessibilityRole="radiogroup" accessibilityLabel="Your medium (optional)">
+              <ThemedText variant="subheadline">Your medium (optional)</ThemedText>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
+                {INQUIRY_MEDIUMS.map((medium) => {
+                  const selected = draft.medium === medium.id;
+                  return (
+                    <Chip
+                      key={medium.id}
+                      label={medium.label}
+                      selected={selected}
+                      disabled={sending}
+                      accessibilityHint={selected ? "Tap again to clear" : undefined}
+                      onPress={() => edit("medium")(selected ? "" : medium.id)}
+                    />
+                  );
+                })}
+              </View>
+              {errors.medium ? (
+                <ThemedText variant="footnote" tone="danger" accessibilityRole="alert">
+                  {errors.medium}
+                </ThemedText>
+              ) : null}
+            </View>
             <TextField
               ref={cityRef}
               label="City (optional)"

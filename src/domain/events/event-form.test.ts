@@ -1,7 +1,14 @@
 /// <reference types="jest" />
 import type { AdminEventDTO } from "@/api/types";
 
-import { emptyEventForm, formFromAdminEvent, parseEventForm, parseTime12, whenPreview } from "./event-form";
+import {
+  emptyEventForm,
+  formFromAdminEvent,
+  parseEventForm,
+  parseTime12,
+  supportsSponsors,
+  whenPreview,
+} from "./event-form";
 
 const filled = () => ({
   ...emptyEventForm(),
@@ -48,6 +55,7 @@ describe("parseEventForm", () => {
       longitude: null,
       capacity: 80,
       coverImageUrl: null,
+      medium: "community",
     });
   });
 
@@ -82,6 +90,87 @@ describe("parseEventForm", () => {
   });
 });
 
+describe("parseEventForm: lane, sponsor and vendors", () => {
+  it("sends no sponsor or vendor keys for a night without them (safe before the migration)", () => {
+    const parsed = parseEventForm(filled());
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    for (const key of ["sponsorName", "sponsorUrl", "sponsorLogoUrl", "vendors"]) {
+      expect(parsed.payload).not.toHaveProperty(key);
+    }
+  });
+
+  it("files a new night under the lane picked, Culinary included", () => {
+    const parsed = parseEventForm({ ...filled(), medium: "culinary" });
+    expect(parsed.ok && parsed.payload.medium).toBe("culinary");
+  });
+
+  it("sends the sponsor and vendors when they are filled in", () => {
+    const parsed = parseEventForm({
+      ...filled(),
+      sponsorName: "  Clematis Coffee ",
+      sponsorUrl: "https://clematis.coffee",
+      vendors: [
+        { name: "Taco Truck", offering: "Street tacos", url: "" },
+        { name: "", offering: "", url: "" },
+      ],
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.payload).toMatchObject({
+      sponsorName: "Clematis Coffee",
+      sponsorUrl: "https://clematis.coffee",
+      vendors: [{ name: "Taco Truck", offering: "Street tacos", url: null }],
+    });
+    expect(parsed.vendorRows).toEqual([0]);
+  });
+
+  it("needs a name before a sponsor link or logo", () => {
+    const link = parseEventForm({ ...filled(), sponsorUrl: "https://example.com" });
+    expect(!link.ok && link.fields.sponsorName).toBeTruthy();
+    const logo = parseEventForm(filled(), undefined, { pendingLogo: true });
+    expect(!logo.ok && logo.fields.sponsorName).toBeTruthy();
+  });
+
+  it("accepts only https sponsor links", () => {
+    for (const url of ["http://example.com", "javascript:alert(1)", "example.com"]) {
+      const parsed = parseEventForm({ ...filled(), sponsorName: "Sponsor", sponsorUrl: url });
+      expect(!parsed.ok && parsed.fields.sponsorUrl).toBeTruthy();
+    }
+  });
+
+  it("on edit, sends only what changed", () => {
+    const initial = { ...filled(), medium: "music", sponsorName: "Clematis Coffee" };
+    const same = parseEventForm(initial, initial);
+    expect(same.ok).toBe(true);
+    if (!same.ok) return;
+    expect(same.payload).not.toHaveProperty("medium");
+    expect(same.payload).not.toHaveProperty("sponsorName");
+    expect(same.payload).not.toHaveProperty("vendors");
+
+    const cleared = parseEventForm({ ...initial, sponsorName: "" }, initial);
+    expect(cleared.ok && cleared.payload.sponsorName).toBeNull();
+
+    const withLink = { ...initial, sponsorUrl: "https://clematis.coffee" };
+    const removed = parseEventForm({ ...withLink, sponsorName: "" }, withLink);
+    expect(removed.ok).toBe(true);
+    if (removed.ok) {
+      expect(removed.payload).toMatchObject({ sponsorName: null, sponsorUrl: null, sponsorLogoUrl: null });
+    }
+
+    const relaned = parseEventForm({ ...initial, medium: "culinary" }, initial);
+    expect(relaned.ok && relaned.payload.medium).toBe("culinary");
+  });
+
+  it("has no money field", () => {
+    const parsed = parseEventForm({ ...filled(), sponsorName: "S", vendors: [{ name: "V", offering: "", url: "" }] });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = JSON.stringify(parsed.payload).toLowerCase();
+    expect(keys).not.toMatch(/price|fee|amount|tier/);
+  });
+});
+
 describe("formFromAdminEvent", () => {
   it("round-trips an existing night into editable fields", () => {
     const dto = {
@@ -104,7 +193,42 @@ describe("formFromAdminEvent", () => {
       venueAddress: "",
       latitude: "26.7131",
       capacity: "",
+      medium: "community",
+      sponsorName: "",
+      vendors: [],
     });
+  });
+
+  it("brings the lane, sponsor and vendors into the form", () => {
+    const dto = {
+      title: "Taco Night",
+      description: "",
+      startsAtLocal: "2026-10-30T18:00",
+      endsAtLocal: "2026-10-30T21:00",
+      venueName: "Hacienda",
+      venueAddress: null,
+      latitude: null,
+      longitude: null,
+      capacity: null,
+      coverImageUrl: null,
+      medium: "culinary",
+      sponsorName: "Clematis Coffee",
+      sponsorUrl: "https://clematis.coffee",
+      sponsorLogoUrl: "https://theartistpost.fluxlab.agency/uploads/logo.png",
+      vendors: [{ name: "Taco Truck", offering: "Street tacos", url: null }],
+    } as AdminEventDTO;
+    expect(formFromAdminEvent(dto)).toMatchObject({
+      medium: "culinary",
+      sponsorName: "Clematis Coffee",
+      sponsorUrl: "https://clematis.coffee",
+      sponsorLogoUrl: "https://theartistpost.fluxlab.agency/uploads/logo.png",
+      vendors: [{ name: "Taco Truck", offering: "Street tacos", url: "" }],
+    });
+    expect(supportsSponsors(dto)).toBe(true);
+  });
+
+  it("knows when the server has no sponsor fields yet", () => {
+    expect(supportsSponsors({ title: "Old night", medium: "community" })).toBe(false);
   });
 });
 
