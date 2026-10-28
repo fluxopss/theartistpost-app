@@ -1,4 +1,8 @@
-import type { AdminEventDTO, AdminEventInput } from "@/api/types";
+import type { AdminEventDTO, AdminEventInput, AdminVendorInput } from "@/api/types";
+
+import { COMMUNITY_LANE, isEventMedium } from "./lanes";
+import { httpsUrl, SPONSOR_NAME_MAX, SPONSOR_URL_MAX, vendorsFrom } from "./sponsors";
+import { parseVendors, vendorDraftsFrom, type VendorDraft } from "./vendor-editor";
 
 /** Everything the manage-a-night form holds, as the person typed it. */
 export type EventFormValues = {
@@ -15,6 +19,13 @@ export type EventFormValues = {
   longitude: string;
   capacity: string;
   coverImageUrl: string;
+  /** "community" or a house lane id. */
+  medium: string;
+  sponsorName: string;
+  sponsorUrl: string;
+  /** Uploaded logo URL (a newly picked logo is uploaded at save time). */
+  sponsorLogoUrl: string;
+  vendors: VendorDraft[];
 };
 
 export function emptyEventForm(): EventFormValues {
@@ -30,6 +41,11 @@ export function emptyEventForm(): EventFormValues {
     longitude: "",
     capacity: "",
     coverImageUrl: "",
+    medium: COMMUNITY_LANE.id,
+    sponsorName: "",
+    sponsorUrl: "",
+    sponsorLogoUrl: "",
+    vendors: [],
   };
 }
 
@@ -78,12 +94,55 @@ function addDay(date: { y: number; m: number; d: number }): string {
   return `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
 }
 
+type BaseKeys =
+  | "title"
+  | "description"
+  | "startsAt"
+  | "endsAt"
+  | "venueName"
+  | "venueAddress"
+  | "latitude"
+  | "longitude"
+  | "capacity"
+  | "coverImageUrl";
+
+/**
+ * The API body. Lane, sponsor and vendor keys are only present when they say
+ * something new (see `parseEventForm`), so a plain save still works on a
+ * server that has not run the sponsor migration yet.
+ */
+export type EventFormPayload = Required<Pick<AdminEventInput, BaseKeys>> &
+  Pick<AdminEventInput, "medium" | "sponsorName" | "sponsorUrl" | "sponsorLogoUrl" | "vendors">;
+
 export type EventFormResult =
-  | { ok: true; payload: Required<Omit<AdminEventInput, "sourceId">> }
+  | {
+      ok: true;
+      payload: EventFormPayload;
+      /** Row index in the form for each vendor sent, to place server messages. */
+      vendorRows: number[];
+    }
   | { ok: false; fields: Record<string, string> };
 
-/** Validate the typed form and build the API body (house wall time). */
-export function parseEventForm(values: EventFormValues): EventFormResult {
+const sameVendors = (a: AdminVendorInput[], b: AdminVendorInput[]) =>
+  a.length === b.length &&
+  a.every(
+    (v, i) => v.name === b[i]?.name && (v.offering ?? "") === (b[i]?.offering ?? "") && (v.url ?? null) === (b[i]?.url ?? null),
+  );
+
+/**
+ * Validate the typed form and build the API body (house wall time).
+ *
+ * `initial` is what the form opened with when editing. Lane, sponsor and
+ * vendor keys go out only when they differ from it (or, for a new night, when
+ * filled in), so a night saved without them never asks the server for
+ * columns it may not have yet. A logo picked but not yet uploaded counts as a
+ * change via `pendingLogo`.
+ */
+export function parseEventForm(
+  values: EventFormValues,
+  initial?: EventFormValues,
+  options: { pendingLogo?: boolean } = {},
+): EventFormResult {
   const fields: Record<string, string> = {};
 
   const title = values.title.trim();
@@ -131,13 +190,56 @@ export function parseEventForm(values: EventFormValues): EventFormResult {
     }
   }
 
-  if (Object.keys(fields).length > 0 || !date || !start || !end) return { ok: false, fields };
+  const medium = values.medium.trim().toLowerCase();
+  if (!medium) fields.medium = "Pick the night’s lane.";
+
+  const sponsorName = values.sponsorName.trim();
+  const sponsorUrl = values.sponsorUrl.trim();
+  const sponsorLogoUrl = values.sponsorLogoUrl.trim();
+  const was = initial ?? emptyEventForm();
+  // Clearing the name removes the sponsor; a link or logo left as it was goes with it.
+  const removing = Boolean(initial) && !sponsorName && Boolean(was.sponsorName.trim());
+  const newLink = Boolean(sponsorUrl) && sponsorUrl !== was.sponsorUrl.trim();
+  const newLogo = options.pendingLogo === true || (Boolean(sponsorLogoUrl) && sponsorLogoUrl !== was.sponsorLogoUrl.trim());
+  if (sponsorName.length > SPONSOR_NAME_MAX) {
+    fields.sponsorName = `Keep the sponsor’s name under ${SPONSOR_NAME_MAX} characters.`;
+  }
+  if (sponsorUrl && !httpsUrl(sponsorUrl, SPONSOR_URL_MAX)) {
+    fields.sponsorUrl = "Use their full https:// link, like https://example.com.";
+  }
+  if (!sponsorName && (removing ? newLink || newLogo : Boolean(sponsorUrl || sponsorLogoUrl) || newLogo)) {
+    fields.sponsorName = "Add the sponsor’s name so the night can say who presents it.";
+  }
+
+  const vendorResult = parseVendors(values.vendors);
+  if (!vendorResult.ok) Object.assign(fields, vendorResult.fields);
+
+  if (Object.keys(fields).length > 0 || !date || !start || !end || !vendorResult.ok) return { ok: false, fields };
+
+  const extras: Partial<EventFormPayload> = {};
+  if (!initial || medium !== initial.medium.trim().toLowerCase()) extras.medium = medium;
+
+  if (removing) {
+    extras.sponsorName = null;
+    extras.sponsorUrl = null;
+    extras.sponsorLogoUrl = null;
+  } else {
+    if (sponsorName !== was.sponsorName.trim()) extras.sponsorName = sponsorName || null;
+    if (sponsorUrl !== was.sponsorUrl.trim()) extras.sponsorUrl = sponsorUrl || null;
+    if (sponsorLogoUrl !== was.sponsorLogoUrl.trim() || options.pendingLogo) {
+      extras.sponsorLogoUrl = sponsorLogoUrl || null;
+    }
+  }
+  const before = parseVendors(was.vendors);
+  if (!before.ok || !sameVendors(vendorResult.vendors, before.vendors)) extras.vendors = vendorResult.vendors;
 
   const startDate = values.date.trim();
   const endDate = end <= start ? addDay(date) : startDate;
   return {
     ok: true,
+    vendorRows: vendorResult.rows,
     payload: {
+      ...extras,
       title,
       description: values.description.trim(),
       startsAt: `${startDate}T${start}`,
@@ -152,10 +254,22 @@ export function parseEventForm(values: EventFormValues): EventFormResult {
   };
 }
 
+/** A known lane as its id ("Culinary" → "culinary"); an older free-text medium kept as typed. */
+function mediumForForm(medium: string | null | undefined): string {
+  const text = medium?.trim() ?? "";
+  if (!text) return COMMUNITY_LANE.id;
+  return isEventMedium(text) ? text.toLowerCase() : text;
+}
+
 /** Editable fields from a managed night the server sent back. */
 export function formFromAdminEvent(
   event: Pick<
     AdminEventDTO,
+    | "medium"
+    | "sponsorName"
+    | "sponsorUrl"
+    | "sponsorLogoUrl"
+    | "vendors"
     | "title"
     | "description"
     | "startsAtLocal"
@@ -182,7 +296,20 @@ export function formFromAdminEvent(
     longitude: event.longitude === null ? "" : String(event.longitude),
     capacity: event.capacity === null ? "" : String(event.capacity),
     coverImageUrl: event.coverImageUrl ?? "",
+    medium: mediumForForm(event.medium),
+    sponsorName: event.sponsorName ?? "",
+    sponsorUrl: event.sponsorUrl ?? "",
+    sponsorLogoUrl: event.sponsorLogoUrl ?? "",
+    vendors: vendorDraftsFrom(vendorsFrom(event.vendors)),
   };
+}
+
+/**
+ * Servers before the sponsor migration send no sponsor keys on a managed
+ * night; the form says so instead of offering fields that would not save.
+ */
+export function supportsSponsors(event: object): boolean {
+  return "sponsorName" in event && "vendors" in event;
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

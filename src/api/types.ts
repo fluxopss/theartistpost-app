@@ -1,4 +1,5 @@
 import type { Reaction, ReactionCounts } from "@/domain/community/reactions";
+import type { PresentedBy, Vendor } from "@/domain/events/sponsors";
 import type { PaymentLinkDTO } from "@/domain/payments/payment-links";
 
 /** Wire types for /api/v1 — mirror of theartistpost `src/server/api` DTOs. */
@@ -27,6 +28,14 @@ export type EventDTO = {
   /** Total seats; null = unlimited. */
   capacity: number | null;
   coverImageUrl: string | null;
+  /**
+   * The night's sponsor, said plainly; null = not a sponsored night. Absent
+   * from servers before the sponsor migration (and from older cached nights):
+   * read it through `presentedByFrom`, never directly.
+   */
+  presentedBy?: PresentedBy | null;
+  /** Food & vendors on the night; [] when none. Absent from older servers: read through `vendorsFrom`. */
+  vendors?: Vendor[];
 };
 
 /** GET /api/v1/app/config — mirror of theartistpost `src/server/api/appConfig.ts`. */
@@ -104,6 +113,13 @@ export type AdminEventDTO = {
   publishState: "DRAFT" | "PUBLISHED" | "CANCELLED";
   coverImageUrl: string | null;
   comingSoon: boolean;
+  /** "Presented by" sponsor; null = not a sponsored night. Absent before the sponsor migration. */
+  sponsorName?: string | null;
+  sponsorUrl?: string | null;
+  /** Absolute URL of the uploaded logo. */
+  sponsorLogoUrl?: string | null;
+  /** Food & vendors, [] when none. */
+  vendors?: Vendor[];
   publishedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
@@ -129,7 +145,19 @@ export type AdminEventInput = {
   capacity?: number | null;
   coverImageUrl?: string | null;
   sourceId?: string;
+  /** "community" or a house lane id ("music", "culinary", …). */
+  medium?: string;
+  /** null or empty clears the sponsor, its link and its logo. */
+  sponsorName?: string | null;
+  /** https only. Needs a sponsor name. */
+  sponsorUrl?: string | null;
+  /** A URL from the cover upload endpoint. Needs a sponsor name. */
+  sponsorLogoUrl?: string | null;
+  /** Up to 12. Sent only when changed, so saves work before the sponsor migration. */
+  vendors?: AdminVendorInput[];
 };
+
+export type AdminVendorInput = { name: string; offering?: string; url?: string | null };
 
 export type AttendeeDTO = {
   userId: string;
