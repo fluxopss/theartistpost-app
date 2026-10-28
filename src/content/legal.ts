@@ -89,7 +89,7 @@ export const legalDocs: Record<LegalDocId, LegalDoc> = {
       {
         heading: "Your choices",
         body: [
-          "Edit or remove profile details in Edit profile. Delete your own posts and notes from their menu. Delete your account in Settings, which removes your profile and what you shared. Email Robbie to delete a Get Involved or subscribe record, or with any other request. Signing out or uninstalling clears what is kept on this phone.",
+          "Edit or remove profile details in Edit profile. Delete your own posts and notes from their menu. Delete your account in Settings, which removes your profile and what you shared. Email Robbie to delete a Get Involved or subscribe record, or with any other request. Signing out clears your session. Saved nights and kindness notes stay on this phone until you clear them in Settings or uninstall the app.",
         ],
       },
       {
