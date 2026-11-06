@@ -11,13 +11,28 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
  *
  * Changing an identifier here changes the runtime fingerprint and needs new
  * signing credentials on EAS — see docs/APP-VARIANTS.md.
+ *
+ * Android production uses TAP's own package, `org.theartistpost.app`, for the
+ * Google Play listing under The Artist Post Inc's developer account. A Play
+ * package name is permanent once published (docs/ANDROID-PLAY-STORE.md), and
+ * no Android build has been published yet, so this is the moment to set it.
+ * iOS keeps the existing bundle id because the App Store Connect app is fixed.
  */
 const PRODUCTION_ID = "agency.fluxlab.theartistpost.dev";
+const ANDROID_PRODUCTION_ID = "org.theartistpost.app";
 
 const VARIANTS = {
-  development: { id: `${PRODUCTION_ID}.devclient`, name: "Artist Post (Dev)" },
-  preview: { id: `${PRODUCTION_ID}.preview`, name: "Artist Post (Preview)" },
-  production: { id: PRODUCTION_ID, name: null },
+  development: {
+    id: `${PRODUCTION_ID}.devclient`,
+    androidId: `${PRODUCTION_ID}.devclient`,
+    name: "Artist Post (Dev)",
+  },
+  preview: {
+    id: `${PRODUCTION_ID}.preview`,
+    androidId: `${PRODUCTION_ID}.preview`,
+    name: "Artist Post (Preview)",
+  },
+  production: { id: PRODUCTION_ID, androidId: ANDROID_PRODUCTION_ID, name: null },
 } as const;
 
 type Variant = keyof typeof VARIANTS;
@@ -38,6 +53,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     name: variant.name ?? config.name ?? "The Artist Post",
     slug: config.slug ?? "theartistpost-app",
     ios: { ...config.ios, bundleIdentifier: variant.id },
-    android: { ...config.android, package: variant.id },
+    android: { ...config.android, package: variant.androidId },
   };
 };
